@@ -5,7 +5,7 @@ branch by branch, then track which paths you took and what comes next.
 
 - Fully offline. No accounts, no cloud, no sync, no analytics.
 - Boards are plain JSON files you can export and import.
-- Android and macOS from one Flutter codebase.
+- Android, macOS, Windows and Linux from one Flutter codebase.
 
 ## Status
 
@@ -13,7 +13,26 @@ Early development. Boards (create, rename, duplicate, trash, restore, revert
 to an earlier version), the tree canvas and outline view, task and decision
 nodes, undo/redo, reminders with repeats, the "Which one did you do?" decision
 prompt, the Today screen, voice notes and .mapex / JSON export and import
-work. Windows and Linux builds and GitHub Release downloads are next.
+work on all four platforms. Settings polish is next.
+
+## Download
+
+Get the latest build from [Releases](https://github.com/vin-kryl/Mapex/releases).
+The apps are not signed with paid certificates, so the system asks once
+before opening them.
+
+- **Android**: download the `.apk` on your phone and open it. Allow
+  installing from your browser or files app when asked. Android 10 or newer.
+- **macOS**: unzip and move Mapex to Applications. The first time, right-click
+  Mapex and choose **Open**, then **Open** again. macOS 13 or newer.
+- **Windows**: unzip anywhere and run `mapex.exe`. If SmartScreen says
+  "Windows protected your PC", click **More info**, then **Run anyway**.
+- **Linux**: unpack the `.tar.gz` and run `./mapex`. Voice notes need
+  `pulseaudio-utils` and `ffmpeg` to record and GStreamer to play (on Ubuntu:
+  `sudo apt install pulseaudio-utils ffmpeg gstreamer1.0-plugins-good gstreamer1.0-libav`).
+  Reminders on Linux pop up only while Mapex is open.
+
+On Android, macOS and Windows reminders fire even when Mapex is closed.
 
 ## Building
 
@@ -22,8 +41,16 @@ Uses the Flutter version in [.flutter-version](.flutter-version).
 ```sh
 flutter pub get
 flutter test
-flutter run -d macos     # or an Android device
+flutter run -d macos     # or windows, linux, or an Android device
 ```
+
+Linux builds also need `ninja-build libgtk-3-dev libgstreamer1.0-dev
+libgstreamer-plugins-base1.0-dev`.
+
+To publish a release, run the **Release** workflow from the Actions tab and
+type the version. It builds all four apps and attaches them to a GitHub
+Release. The Android APK is signed with the key in the repository's secrets
+([docs/signing.md](docs/signing.md)).
 
 - [Data format](docs/data-format.md)
 - [Android signing key](docs/signing.md)

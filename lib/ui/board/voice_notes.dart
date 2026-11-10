@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -119,6 +120,15 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
         _editor.addVoiceNote(widget.nodeId, note);
       } else {
         _editor.replaceVoiceNote(widget.nodeId, replaceId, note);
+      }
+    } on ProcessException {
+      // Linux records through parecord and ffmpeg.
+      if (mounted) {
+        showMessage(
+          context,
+          'Recording needs PulseAudio tools and ffmpeg. On Ubuntu: '
+          'sudo apt install pulseaudio-utils ffmpeg',
+        );
       }
     } on Object catch (e) {
       if (mounted) showMessage(context, 'Could not record: $e');

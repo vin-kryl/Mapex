@@ -68,12 +68,16 @@ class AlertPayload {
 }
 
 /// Works out every notification a board needs from now on.
+///
+/// With [nativeRepeats] false (Windows and Linux), daily and weekly repeats
+/// are booked a few ahead like custom intervals.
 abstract final class AlertPlanner {
   static List<PlannedAlert> plan(
     Board board,
     AppSettings settings,
-    DateTime now,
-  ) {
+    DateTime now, {
+    bool nativeRepeats = true,
+  }) {
     final out = <PlannedAlert>[];
     for (final (:node, depth: _) in TreeOps.walk(board.root)) {
       final r = node.reminder;
@@ -89,7 +93,7 @@ abstract final class AlertPlanner {
           RepeatKind.weekly => Recurrence.weekly,
           _ => Recurrence.none,
         };
-        if (recurrence != Recurrence.none) {
+        if (recurrence != Recurrence.none && nativeRepeats) {
           // The system repeats it; book the next one only.
           final first = _firstFiring(due, r, offset, now);
           out.add(
@@ -108,8 +112,9 @@ abstract final class AlertPlanner {
           );
           return;
         }
-        // One-off, or a custom interval: book the next few occurrences.
-        if (r.repeat != RepeatKind.interval) {
+        // A one-off is booked once. Custom intervals, and daily or weekly
+        // repeats where the system cannot repeat, book the next few.
+        if (r.repeat == RepeatKind.none) {
           final at = due.add(offset);
           if (at.isAfter(now)) {
             out.add(

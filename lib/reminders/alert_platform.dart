@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -26,6 +27,10 @@ abstract class AlertPlatform {
   Future<void> schedule(PlannedAlert alert, {required bool sound});
 
   Future<void> cancel(int id);
+
+  /// Whether the system repeats daily and weekly notifications by itself.
+  /// Where it cannot, the planner books the next few instead.
+  bool get repeatsNatively;
 }
 
 /// Does nothing. Used in tests and wherever notifications are unavailable.
@@ -47,13 +52,63 @@ class NoAlertPlatform implements AlertPlatform {
 
   @override
   Future<void> cancel(int id) async {}
+
+  @override
+  bool get repeatsNatively => true;
+}
+
+/// Shows notifications from timers inside the running app. Used on Linux,
+/// where the system has no way to schedule them: reminders there fire only
+/// while Mapex is open.
+class InAppAlerts {
+  InAppAlerts({required this.show, DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now;
+
+  final Future<void> Function(PlannedAlert alert, bool sound) show;
+  final DateTime Function() _clock;
+
+  /// Runs after each notification is shown, so repeats can be topped up.
+  void Function()? onFired;
+
+  final _booked = <int, ({PlannedAlert alert, Timer timer})>{};
+
+  List<({int id, AlertPayload? payload})> pending() => [
+    for (final b in _booked.values) (id: b.alert.id, payload: b.alert.payload),
+  ];
+
+  void schedule(PlannedAlert alert, {required bool sound}) {
+    cancel(alert.id);
+    final wait = alert.at.difference(_clock());
+    if (wait.isNegative) return;
+    final timer = Timer(wait, () async {
+      _booked.remove(alert.id);
+      await show(alert, sound);
+      onFired?.call();
+    });
+    _booked[alert.id] = (alert: alert, timer: timer);
+  }
+
+  void cancel(int id) => _booked.remove(id)?.timer.cancel();
 }
 
 /// Real notifications via flutter_local_notifications. Works when the app is
-/// closed: Android alarms, macOS UNUserNotificationCenter.
+/// closed on Android (alarms), macOS (UNUserNotificationCenter) and Windows
+/// (scheduled toasts). On Linux they come from [InAppAlerts].
 class LocalAlertPlatform implements AlertPlatform {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _exact = false;
+
+  /// Only on Linux.
+  late final InAppAlerts? inApp = Platform.isLinux
+      ? InAppAlerts(show: _showNow)
+      : null;
+
+  /// Identifies the app to Windows' notification centre. Fixed for good:
+  /// changing it orphans notifications already booked.
+  static const _windowsGuid = '6f0c3b2e-8f4a-4d6b-9a51-2c7e3d9b1a40';
+
+  @override
+  bool get repeatsNatively => !Platform.isWindows && !Platform.isLinux;
 
   /// Android channel. Sound on and off need separate channels, since a
   /// channel's sound cannot change after it is created.
@@ -80,6 +135,12 @@ class LocalAlertPlatform implements AlertPlatform {
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         macOS: darwin,
         iOS: darwin,
+        linux: LinuxInitializationSettings(defaultActionName: 'Open'),
+        windows: WindowsInitializationSettings(
+          appName: 'Mapex',
+          appUserModelId: 'com.apeaxis.mapex',
+          guid: _windowsGuid,
+        ),
       ),
       onDidReceiveNotificationResponse: (r) {
         final p = AlertPayload.decode(r.payload);
@@ -98,6 +159,8 @@ class LocalAlertPlatform implements AlertPlatform {
 
   @override
   Future<AlertPayload?> launchPayload() async {
+    // Not available there; a tap while the app runs still works.
+    if (Platform.isLinux) return null;
     final details = await _plugin.getNotificationAppLaunchDetails();
     if (details == null || !details.didNotificationLaunchApp) return null;
     return AlertPayload.decode(details.notificationResponse?.payload);
@@ -126,6 +189,7 @@ class LocalAlertPlatform implements AlertPlatform {
           ) ??
           false;
     }
+    if (Platform.isLinux || Platform.isWindows) return true;
     final ios = _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
@@ -135,6 +199,7 @@ class LocalAlertPlatform implements AlertPlatform {
 
   @override
   Future<List<({int id, AlertPayload? payload})>> pending() async {
+    if (inApp case final timers?) return timers.pending();
     final list = await _plugin.pendingNotificationRequests();
     return [
       for (final r in list) (id: r.id, payload: AlertPayload.decode(r.payload)),
@@ -142,26 +207,17 @@ class LocalAlertPlatform implements AlertPlatform {
   }
 
   @override
-  Future<void> schedule(PlannedAlert alert, {required bool sound}) {
-    final channel = sound ? _channelSound : _channelQuiet;
+  Future<void> schedule(PlannedAlert alert, {required bool sound}) async {
+    if (inApp case final timers?) {
+      return timers.schedule(alert, sound: sound);
+    }
     return _plugin.zonedSchedule(
       id: alert.id,
       scheduledDate: tz.TZDateTime.from(alert.at, tz.local),
       title: alert.title,
       body: alert.body,
       payload: alert.payload.encode(),
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          channel.id,
-          channel.name,
-          importance: Importance.high,
-          priority: Priority.high,
-          playSound: sound,
-          category: AndroidNotificationCategory.reminder,
-        ),
-        macOS: DarwinNotificationDetails(presentSound: sound),
-        iOS: DarwinNotificationDetails(presentSound: sound),
-      ),
+      notificationDetails: _details(sound),
       androidScheduleMode: _exact
           ? AndroidScheduleMode.exactAllowWhileIdle
           : AndroidScheduleMode.inexactAllowWhileIdle,
@@ -173,6 +229,37 @@ class LocalAlertPlatform implements AlertPlatform {
     );
   }
 
+  Future<void> _showNow(PlannedAlert alert, bool sound) => _plugin.show(
+    id: alert.id,
+    title: alert.title,
+    body: alert.body,
+    payload: alert.payload.encode(),
+    notificationDetails: _details(sound),
+  );
+
+  NotificationDetails _details(bool sound) {
+    final channel = sound ? _channelSound : _channelQuiet;
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        channel.id,
+        channel.name,
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: sound,
+        category: AndroidNotificationCategory.reminder,
+      ),
+      macOS: DarwinNotificationDetails(presentSound: sound),
+      iOS: DarwinNotificationDetails(presentSound: sound),
+      linux: LinuxNotificationDetails(suppressSound: !sound),
+      windows: WindowsNotificationDetails(
+        audio: sound ? null : WindowsNotificationAudio.silent(),
+      ),
+    );
+  }
+
   @override
-  Future<void> cancel(int id) => _plugin.cancel(id: id);
+  Future<void> cancel(int id) async {
+    if (inApp case final timers?) return timers.cancel(id);
+    await _plugin.cancel(id: id);
+  }
 }

@@ -65,6 +65,9 @@ class FakePlatform implements AlertPlatform {
       booked[alert.id] = alert;
 
   @override
+  bool repeatsNatively = true;
+
+  @override
   Future<void> cancel(int id) async {
     cancels++;
     booked.remove(id);
@@ -210,6 +213,27 @@ void main() {
       expect(a.at, DateTime(2026, 11, 11, 7));
     });
 
+    test('where the system cannot repeat, daily books a few ahead', () {
+      final b = board([
+        n(
+          'a',
+          date: '2026-11-01',
+          time: '07:00',
+          reminder: const Reminder(repeat: RepeatKind.daily),
+        ),
+      ]);
+      final alerts = AlertPlanner.plan(
+        b,
+        settings.copyWith(repeatsScheduledAhead: 2),
+        now,
+        nativeRepeats: false,
+      );
+      expect(alerts.map((a) => (a.at, a.recurrence)), [
+        (DateTime(2026, 11, 11, 7), Recurrence.none),
+        (DateTime(2026, 11, 12, 7), Recurrence.none),
+      ]);
+    });
+
     test('custom intervals book the next few, per the setting', () {
       final b = board([
         n(
@@ -297,6 +321,37 @@ void main() {
         board([n('a', date: '2026-11-10', time: '09:00', reminder: r)]),
       ]);
       expect(platform.booked.values.map((a) => a.payload.boardId), ['b1']);
+    });
+  });
+
+  group('in-app alerts (Linux)', () {
+    test('fire on time, can be cancelled, and report pending', () async {
+      final shown = <int>[];
+      var fired = 0;
+      final start = DateTime.now();
+      final alerts = InAppAlerts(show: (a, _) async => shown.add(a.id))
+        ..onFired = () => fired++;
+      PlannedAlert at(int id, int ms) => PlannedAlert(
+        id: id,
+        at: start.add(Duration(milliseconds: ms)),
+        title: 't',
+        body: 'b',
+        payload: const AlertPayload(
+          boardId: 'b',
+          nodeId: 'n',
+          kind: AlertKind.prompt,
+        ),
+      );
+      alerts
+        ..schedule(at(1, 30), sound: true)
+        ..schedule(at(2, 30), sound: true)
+        ..schedule(at(3, -1000), sound: true);
+      expect(alerts.pending().map((p) => p.id), [1, 2]);
+      alerts.cancel(2);
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(shown, [1]);
+      expect(fired, 1);
+      expect(alerts.pending(), isEmpty);
     });
   });
 
