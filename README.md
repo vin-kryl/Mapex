@@ -27,7 +27,7 @@ before opening them.
   Mapex and choose **Open**, then **Open** again. macOS 13 or newer.
 - **Windows**: unzip anywhere and run `mapex.exe`. If SmartScreen says
   "Windows protected your PC", click **More info**, then **Run anyway**.
-- **Linux**: unpack the `.tar.gz` and run `./mapex`. Voice notes need
+- **Linux**: unpack the `.tar.gz` and run `./mapex` (or `./mapex board.mapex` to open a file). Voice notes need
   `pulseaudio-utils` and `ffmpeg` to record and GStreamer to play (on Ubuntu:
   `sudo apt install pulseaudio-utils ffmpeg gstreamer1.0-plugins-good gstreamer1.0-libav`).
   Reminders on Linux pop up only while Mapex is open.
