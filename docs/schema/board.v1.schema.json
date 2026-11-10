@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/vin-kryl/Mapex/docs/schema/board.v1.schema.json",
+  "title": "Mapex board, format 1",
+  "type": "object",
+  "required": ["schemaVersion", "id", "title", "createdAt", "updatedAt", "root"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9-]{1,64}$" },
+    "title": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "root": { "$ref": "#/$defs/node" }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": [
+        "id", "title", "type", "status", "notes", "date", "time", "reminder",
+        "voiceNotes", "color", "tags", "chosenChildIds", "collapsed",
+        "createdAt", "updatedAt", "children"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Unique within the board." },
+        "title": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["task", "decision"] },
+        "status": { "enum": ["pending", "done", "notYet", "eliminated"] },
+        "notes": { "type": "string" },
+        "date": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "time": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
+        "reminder": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/reminder" }]
+        },
+        "voiceNotes": { "type": "array", "items": { "$ref": "#/$defs/voiceNote" } },
+        "color": { "type": ["string", "null"], "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "chosenChildIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Decision nodes: ids of the children that were picked. Each must be a child of this node."
+        },
+        "collapsed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "reminder": {
+      "type": "object",
+      "required": ["leadMinutes", "repeat", "intervalMinutes"],
+      "additionalProperties": false,
+      "properties": {
+        "leadMinutes": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "null means use the default lead time from settings."
+        },
+        "repeat": { "enum": ["none", "daily", "weekly", "interval"] },
+        "intervalMinutes": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Required when repeat is interval."
+        }
+      }
+    },
+    "voiceNote": {
+      "type": "object",
+      "required": ["id", "path", "createdAt", "durationMs"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "path": {
+          "type": "string",
+          "pattern": "^audio/",
+          "description": "Relative to the board folder."
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "durationMs": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}
