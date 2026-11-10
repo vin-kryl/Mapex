@@ -9,9 +9,9 @@ branch by branch, then track which paths you took and what comes next.
 
 ## Status
 
-Early development. Right now you can create, rename, duplicate, trash and
-restore boards, and revert a board to an earlier version. The tree canvas is
-next.
+Early development. Boards (create, rename, duplicate, trash, restore, revert
+to an earlier version), the tree canvas and outline view, task and decision
+nodes, and undo/redo work. Reminders and the Today view are next.
 
 ## Building
 

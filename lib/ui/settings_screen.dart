@@ -55,7 +55,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
               _Section(
-                title: 'New boards start as',
+                title: 'New nodes start as',
                 child: SegmentedButton<NodeType>(
                   showSelectedIcon: false,
                   segments: const [
@@ -68,6 +68,36 @@ class SettingsScreen extends ConsumerWidget {
                   selected: {s.defaultNodeType},
                   onSelectionChanged: (v) =>
                       notifier.update(s.copyWith(defaultNodeType: v.first)),
+                ),
+              ),
+              _Section(
+                title: 'Tree layout',
+                child: SegmentedButton<LayoutDirection>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(
+                      value: LayoutDirection.topDown,
+                      label: Text('Top down'),
+                    ),
+                    ButtonSegment(
+                      value: LayoutDirection.leftRight,
+                      label: Text('Left to right'),
+                    ),
+                  ],
+                  selected: {s.layoutDirection},
+                  onSelectionChanged: (v) =>
+                      notifier.update(s.copyWith(layoutDirection: v.first)),
+                ),
+              ),
+              _Section(
+                title: 'Undo steps',
+                subtitle: 'How far back undo goes while a board is open.',
+                child: _NumberField(
+                  value: s.undoHistoryDepth,
+                  min: AppSettings.undoDepthRange.min,
+                  max: AppSettings.undoDepthRange.max,
+                  onChanged: (v) =>
+                      notifier.update(s.copyWith(undoHistoryDepth: v)),
                 ),
               ),
               _Section(

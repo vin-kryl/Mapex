@@ -23,6 +23,11 @@ abstract final class Palette {
   static const rose = Color(0xFFFFC2D4);
 
   static const accents = [lavender, mint, peach, sky, butter, rose];
+
+  /// Status colours.
+  static const done = Color(0xFF2F9E6E);
+  static const notYet = Color(0xFFC77D1E);
+  static const danger = Color(0xFFD64545);
 }
 
 /// Spacing and shape tokens.
@@ -51,7 +56,7 @@ ThemeData buildTheme(Brightness brightness) {
     onSecondary: Palette.ink,
     tertiary: Palette.mint,
     onTertiary: Palette.ink,
-    error: const Color(0xFFD64545),
+    error: Palette.danger,
     onError: Palette.paper,
     surface: dark ? Palette.night : Palette.paper,
     onSurface: dark ? Palette.paper : Palette.ink,
