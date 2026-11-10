@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mapex/model/node.dart';
+import 'package:mapex/model/reminder.dart';
 import 'package:mapex/model/tree_ops.dart';
+import 'package:mapex/reminders/timing.dart';
 import 'package:mapex/settings/app_settings.dart';
 import 'package:mapex/state/board_editor.dart';
 import 'package:mapex/state/providers.dart';
@@ -99,5 +101,81 @@ void main() {
     final id = editor().addChild(state().board.root.id, 'Choice');
     expect(TreeOps.find(state().board.root, id)!.type, NodeType.decision);
     await editor().flush();
+  });
+
+  group('prompt answers', () {
+    late String id;
+    setUp(() {
+      id = editor().addChild(state().board.root.id, 'Walk');
+    });
+
+    Node node() => TreeOps.find(state().board.root, id)!;
+
+    test('done on a one-off ticks it done', () async {
+      editor().editNode(
+        id,
+        title: 'Walk',
+        notes: '',
+        status: NodeStatus.pending,
+        color: null,
+        tags: const [],
+        setWhen: true,
+        date: DateTime(2026, 11, 10),
+        time: DateTime(2026, 11, 10, 7),
+        reminder: const Reminder(),
+      );
+      editor().answerDone(id);
+      expect(node().status, NodeStatus.done);
+      await editor().flush();
+    });
+
+    test('done on a daily repeat rolls it to the next day', () async {
+      final now = DateTime.now();
+      final today7 = DateTime(now.year, now.month, now.day, 7);
+      editor().editNode(
+        id,
+        title: 'Walk',
+        notes: '',
+        status: NodeStatus.pending,
+        color: null,
+        tags: const [],
+        setWhen: true,
+        date: today7,
+        time: today7,
+        reminder: const Reminder(repeat: RepeatKind.daily),
+      );
+      editor().answerDone(id);
+      expect(node().status, NodeStatus.pending);
+      final due = Timing.dueAt(node())!;
+      expect(due.isAfter(now), isTrue);
+      expect(due.hour, 7);
+      await editor().flush();
+    });
+
+    test('not yet moves the time and marks it not yet', () async {
+      editor().snooze(id, DateTime(2026, 12, 1, 18, 5));
+      expect(node().status, NodeStatus.notYet);
+      expect((node().date, node().time), ('2026-12-01', '18:05'));
+      await editor().flush();
+    });
+
+    test('a reminder is dropped when the time is cleared', () async {
+      editor().editNode(
+        id,
+        title: 'Walk',
+        notes: '',
+        status: NodeStatus.pending,
+        color: null,
+        tags: const [],
+        setWhen: true,
+        date: DateTime(2026, 11, 10),
+        time: null,
+        reminder: const Reminder(),
+      );
+      expect(node().date, '2026-11-10');
+      expect(node().time, isNull);
+      expect(node().reminder, isNull);
+      await editor().flush();
+    });
   });
 }

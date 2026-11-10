@@ -3,7 +3,9 @@ import 'package:uuid/uuid.dart';
 
 import '../model/board.dart';
 import '../model/node.dart';
+import '../model/reminder.dart';
 import '../model/tree_ops.dart';
+import '../reminders/timing.dart';
 import 'providers.dart';
 
 class EditorState {
@@ -56,6 +58,23 @@ class BoardEditor extends AsyncNotifier<EditorState> {
     final board = s.board.copyWith(root: root, updatedAt: now);
     state = AsyncData(EditorState(board: board, undo: undo));
     _save(board, label);
+  }
+
+  /// Expands every collapsed ancestor of [id] so it can be seen. Not an
+  /// undo step: it only changes what is visible.
+  void reveal(String id) {
+    final s = _s;
+    final path = TreeOps.pathTo(s.board.root, id);
+    var root = s.board.root;
+    for (final ancestor in path.take(path.length - 1)) {
+      if (TreeOps.find(root, ancestor)!.collapsed) {
+        root = TreeOps.setCollapsed(root, ancestor, false);
+      }
+    }
+    if (identical(root, s.board.root)) return;
+    final board = s.board.copyWith(root: root);
+    state = AsyncData(EditorState(board: board, undo: s.undo, redo: s.redo));
+    _save(board, 'Expand');
   }
 
   void undo() {
@@ -128,6 +147,10 @@ class BoardEditor extends AsyncNotifier<EditorState> {
     required NodeStatus status,
     required String? color,
     required List<String> tags,
+    DateTime? date,
+    DateTime? time,
+    Reminder? reminder,
+    bool setWhen = false,
   }) {
     apply('Edit', (root, now) {
       var next = TreeOps.update(
@@ -147,12 +170,81 @@ class BoardEditor extends AsyncNotifier<EditorState> {
                 updatedAt: now,
               ),
       );
+      if (setWhen) next = _withWhen(next, id, date, time, reminder, now);
       if (TreeOps.find(next, id)?.status != status) {
         next = TreeOps.setStatus(next, id, status, now);
       }
       return next;
     });
   }
+
+  /// Sets or clears a node's date, time and reminder. A reminder needs both
+  /// a date and a time.
+  static Node _withWhen(
+    Node root,
+    String id,
+    DateTime? date,
+    DateTime? time,
+    Reminder? reminder,
+    DateTime now,
+  ) {
+    return TreeOps.update(root, id, (n) {
+      final d = date == null ? null : Timing.formatDate(date);
+      final t = date == null || time == null ? null : Timing.formatTime(time);
+      final r = t == null ? null : reminder;
+      if (n.date == d && n.time == t && n.reminder == r) return n;
+      return n.copyWith(
+        date: () => d,
+        time: () => t,
+        reminder: () => r,
+        updatedAt: now,
+      );
+    });
+  }
+
+  /// "Not yet": pushes the node to [newDue] and marks it not yet.
+  void snooze(String id, DateTime newDue) {
+    apply('Not yet', (root, now) {
+      return TreeOps.update(
+        root,
+        id,
+        (n) => n.copyWith(
+          status: NodeStatus.notYet,
+          date: () => Timing.formatDate(newDue),
+          time: () => Timing.formatTime(newDue),
+          updatedAt: now,
+        ),
+      );
+    });
+  }
+
+  /// "Done" from the task prompt. A repeating task rolls forward to its next
+  /// time after now and stays open; anything else is ticked done.
+  void answerDone(String id) {
+    apply('Done', (root, now) {
+      final node = TreeOps.find(root, id);
+      final due = node == null ? null : Timing.dueAt(node);
+      final target = due == null || !rollRepeatsForward
+          ? null
+          : Timing.nextAfter(due, node!.reminder, now.toLocal());
+      if (target == null) {
+        return TreeOps.setStatus(root, id, NodeStatus.done, now);
+      }
+      return TreeOps.update(
+        root,
+        id,
+        (n) => n.copyWith(
+          status: NodeStatus.pending,
+          date: () => Timing.formatDate(target),
+          time: () => Timing.formatTime(target),
+          updatedAt: now,
+        ),
+      );
+    });
+  }
+
+  /// Whether ticking a repeating task done rolls it to its next time.
+  static const rollRepeatsForward = true;
 
   void setStatus(String id, NodeStatus status) =>
       apply('Status', (root, now) => TreeOps.setStatus(root, id, status, now));

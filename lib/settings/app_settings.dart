@@ -34,6 +34,8 @@ class AppSettings {
     required this.exportWithAudio,
     required this.undoHistoryDepth,
     required this.historyCap,
+    required this.snoozeMinutes,
+    required this.repeatsScheduledAhead,
   });
 
   static const defaults = AppSettings(
@@ -47,12 +49,16 @@ class AppSettings {
     exportWithAudio: true,
     undoHistoryDepth: 100,
     historyCap: 200,
+    snoozeMinutes: 60,
+    repeatsScheduledAhead: 5,
   );
 
   /// Bounds used by the settings screen and when reading the file.
   static const historyCapRange = (min: 1, max: 5000);
   static const undoDepthRange = (min: 1, max: 1000);
   static const fontScaleRange = (min: 0.8, max: 1.6);
+  static const snoozeRange = (min: 1, max: 10080);
+  static const repeatsAheadRange = (min: 1, max: 50);
 
   final LayoutDirection layoutDirection;
   final NodeType defaultNodeType;
@@ -67,6 +73,13 @@ class AppSettings {
   /// How many history snapshots each board keeps.
   final int historyCap;
 
+  /// The "Not yet" quick option pushes a node back by this many minutes.
+  final int snoozeMinutes;
+
+  /// For custom-interval repeats, how many upcoming reminders are booked
+  /// with the system at a time. Topped up whenever the app opens.
+  final int repeatsScheduledAhead;
+
   AppSettings copyWith({
     LayoutDirection? layoutDirection,
     NodeType? defaultNodeType,
@@ -78,6 +91,8 @@ class AppSettings {
     bool? exportWithAudio,
     int? undoHistoryDepth,
     int? historyCap,
+    int? snoozeMinutes,
+    int? repeatsScheduledAhead,
   }) {
     return AppSettings(
       layoutDirection: layoutDirection ?? this.layoutDirection,
@@ -92,6 +107,9 @@ class AppSettings {
       exportWithAudio: exportWithAudio ?? this.exportWithAudio,
       undoHistoryDepth: undoHistoryDepth ?? this.undoHistoryDepth,
       historyCap: historyCap ?? this.historyCap,
+      snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
+      repeatsScheduledAhead:
+          repeatsScheduledAhead ?? this.repeatsScheduledAhead,
     );
   }
 
@@ -106,6 +124,8 @@ class AppSettings {
     'exportWithAudio': exportWithAudio,
     'undoHistoryDepth': undoHistoryDepth,
     'historyCap': historyCap,
+    'snoozeMinutes': snoozeMinutes,
+    'repeatsScheduledAhead': repeatsScheduledAhead,
   };
 
   /// Lenient: a bad or missing value is replaced by its default.
@@ -173,6 +193,12 @@ class AppSettings {
         undoDepthRange,
       ),
       historyCap: intIn('historyCap', d.historyCap, historyCapRange),
+      snoozeMinutes: intIn('snoozeMinutes', d.snoozeMinutes, snoozeRange),
+      repeatsScheduledAhead: intIn(
+        'repeatsScheduledAhead',
+        d.repeatsScheduledAhead,
+        repeatsAheadRange,
+      ),
     );
   }
 }

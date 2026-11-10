@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../model/node.dart';
 import '../../model/tree_ops.dart';
+import '../../reminders/permission.dart';
 import '../../state/board_editor.dart';
 import '../../state/providers.dart';
 import '../dialogs.dart';
@@ -15,9 +16,12 @@ import 'outline_view.dart';
 enum BoardView { canvas, outline }
 
 class BoardScreen extends ConsumerStatefulWidget {
-  const BoardScreen({super.key, required this.boardId});
+  const BoardScreen({super.key, required this.boardId, this.initialNodeId});
 
   final String boardId;
+
+  /// Opens with this node selected and its branch expanded.
+  final String? initialNodeId;
 
   @override
   ConsumerState<BoardScreen> createState() => _BoardScreenState();
@@ -25,7 +29,8 @@ class BoardScreen extends ConsumerStatefulWidget {
 
 class _BoardScreenState extends ConsumerState<BoardScreen> {
   BoardView _view = BoardView.canvas;
-  String? _selectedId;
+  late String? _selectedId = widget.initialNodeId;
+  bool _revealed = false;
 
   /// Focus mode: show only this node's branch.
   String? _focusId;
@@ -45,6 +50,13 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
         body: Center(child: Text('Could not open board.\n$e')),
       ),
       data: (s) {
+        if (!_revealed && widget.initialNodeId != null) {
+          _revealed = true;
+          final id = widget.initialNodeId!;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _editor.reveal(id);
+          });
+        }
         final root = s.board.root;
         final focus = _focusId == null ? null : TreeOps.find(root, _focusId!);
         final shown = focus ?? root;
@@ -181,8 +193,15 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
   }
 
   Future<void> _edit(Node node) async {
-    final result = await showEditSheet(context, node);
+    final result = await showEditSheet(
+      context,
+      node,
+      defaultLeadMinutes: ref.read(settingsProvider).defaultReminderLeadMinutes,
+    );
     if (result == null) return;
+    if (result.when.reminder != null && node.reminder == null) {
+      await askForRemindersOnce(ref);
+    }
     _editor.editNode(
       node.id,
       title: result.title,
@@ -190,6 +209,10 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
       status: result.status,
       color: result.color,
       tags: result.tags,
+      setWhen: true,
+      date: result.when.date,
+      time: result.when.timeAsDateTime,
+      reminder: result.when.reminder,
     );
   }
 

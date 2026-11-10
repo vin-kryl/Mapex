@@ -2,6 +2,10 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../model/board.dart';
+import '../reminders/alert_platform.dart';
+import '../reminders/plan.dart';
+import '../reminders/scheduler.dart';
 import '../settings/app_settings.dart';
 import '../settings/settings_store.dart';
 import '../storage/board_repository.dart';
@@ -26,8 +30,20 @@ class SettingsNotifier extends Notifier<AppSettings> {
   AppSettings build() => ref.watch(initialSettingsProvider);
 
   Future<void> update(AppSettings settings) async {
+    final before = state;
     state = settings;
     await ref.read(settingsStoreProvider).save(settings);
+    final remindersChanged =
+        before.defaultReminderLeadMinutes !=
+            settings.defaultReminderLeadMinutes ||
+        before.decisionPromptDelayMinutes !=
+            settings.decisionPromptDelayMinutes ||
+        before.notificationSound != settings.notificationSound ||
+        before.repeatsScheduledAhead != settings.repeatsScheduledAhead;
+    if (remindersChanged) {
+      final boards = await ref.read(boardRepositoryProvider).loadAllBoards();
+      await ref.read(reminderSchedulerProvider).syncAll(boards);
+    }
   }
 }
 
@@ -40,6 +56,8 @@ final boardRepositoryProvider = Provider<BoardRepository>(
     root: ref.watch(appDirProvider),
     // Read on every save, so a changed cap applies straight away.
     historyCap: () => ref.read(settingsProvider).historyCap,
+    onSaved: (board) => ref.read(reminderSchedulerProvider).syncBoard(board),
+    onRemoved: (id) => ref.read(reminderSchedulerProvider).removeBoard(id),
   ),
 );
 
@@ -57,4 +75,36 @@ final boardProvider = FutureProvider.family(
 
 final historyProvider = FutureProvider.family(
   (ref, String id) => ref.watch(boardRepositoryProvider).listHistory(id),
+);
+
+/// Every board in full, for the Today screen.
+final allBoardsProvider = FutureProvider<List<Board>>((ref) async {
+  ref.watch(boardListProvider);
+  return ref.watch(boardRepositoryProvider).loadAllBoards();
+});
+
+/// The system notification service. Overridden in main() with the real one.
+final alertPlatformProvider = Provider<AlertPlatform>(
+  (ref) => NoAlertPlatform(),
+);
+
+final reminderSchedulerProvider = Provider<ReminderScheduler>(
+  (ref) => ReminderScheduler(
+    platform: ref.watch(alertPlatformProvider),
+    settings: () => ref.read(settingsProvider),
+  ),
+);
+
+/// A tapped notification waiting to be shown as a prompt.
+class PendingPrompt extends Notifier<AlertPayload?> {
+  @override
+  AlertPayload? build() => null;
+
+  void show(AlertPayload payload) => state = payload;
+
+  void clear() => state = null;
+}
+
+final pendingPromptProvider = NotifierProvider<PendingPrompt, AlertPayload?>(
+  PendingPrompt.new,
 );

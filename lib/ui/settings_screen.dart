@@ -101,6 +101,61 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
               _Section(
+                title: 'Reminder heads-up',
+                subtitle:
+                    'Minutes before a node\'s time. 0 means only at the time.',
+                child: _NumberField(
+                  value: s.defaultReminderLeadMinutes,
+                  min: 0,
+                  max: AppSettings.snoozeRange.max,
+                  onChanged: (v) => notifier.update(
+                    s.copyWith(defaultReminderLeadMinutes: v),
+                  ),
+                ),
+              ),
+              _Section(
+                title: 'Ask about decisions after',
+                subtitle: 'Minutes after a decision\'s time before asking which one you did.',
+                child: _NumberField(
+                  value: s.decisionPromptDelayMinutes,
+                  min: 0,
+                  max: AppSettings.snoozeRange.max,
+                  onChanged: (v) => notifier.update(
+                    s.copyWith(decisionPromptDelayMinutes: v),
+                  ),
+                ),
+              ),
+              _Section(
+                title: '"Not yet" pushes back by',
+                subtitle: 'Minutes.',
+                child: _NumberField(
+                  value: s.snoozeMinutes,
+                  min: AppSettings.snoozeRange.min,
+                  max: AppSettings.snoozeRange.max,
+                  onChanged: (v) =>
+                      notifier.update(s.copyWith(snoozeMinutes: v)),
+                ),
+              ),
+              _Section(
+                title: 'Notification sound',
+                child: Switch(
+                  value: s.notificationSound,
+                  onChanged: (v) =>
+                      notifier.update(s.copyWith(notificationSound: v)),
+                ),
+              ),
+              _Section(
+                title: 'Custom repeats booked ahead',
+                subtitle: 'For "every few hours/days" reminders. Topped up each time the app opens.',
+                child: _NumberField(
+                  value: s.repeatsScheduledAhead,
+                  min: AppSettings.repeatsAheadRange.min,
+                  max: AppSettings.repeatsAheadRange.max,
+                  onChanged: (v) =>
+                      notifier.update(s.copyWith(repeatsScheduledAhead: v)),
+                ),
+              ),
+              _Section(
                 title: 'Versions kept per board',
                 subtitle: 'Older versions are removed past this number.',
                 child: _NumberField(

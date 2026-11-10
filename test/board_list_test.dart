@@ -32,6 +32,9 @@ void main() {
         child: const MapexApp(),
       ),
     );
+    // The app opens on Today; these tests are about the Boards tab.
+    await tester.tap(find.byType(NavigationDestination).last);
+    await tester.pump();
   }
 
   /// File work needs the real event loop, which widget tests only run
@@ -43,7 +46,10 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 10)),
       );
       await tester.pump(const Duration(milliseconds: 50));
-      final idle = find.byType(CircularProgressIndicator).evaluate().isEmpty;
+      final idle = find
+          .byType(CircularProgressIndicator, skipOffstage: false)
+          .evaluate()
+          .isEmpty;
       final done = until == null ? i > 3 : until.evaluate().isNotEmpty;
       if (idle && done) break;
     }
