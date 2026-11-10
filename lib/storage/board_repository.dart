@@ -71,11 +71,19 @@ class BoardRepository {
     required this._historyCap,
     DateTime Function()? clock,
     String Function()? newId,
+    this.onSaved,
+    this.onRemoved,
   }) : _clock = clock ?? DateTime.now,
        _newId = newId ?? const Uuid().v4;
 
   final Directory root;
   final int Function() _historyCap;
+
+  /// Called after a board is written, so reminders can follow it.
+  final Future<void> Function(Board board)? onSaved;
+
+  /// Called after a board leaves the board list (trash or delete).
+  final Future<void> Function(String boardId)? onRemoved;
   final DateTime Function() _clock;
   final String Function() _newId;
 
@@ -137,6 +145,24 @@ class BoardRepository {
       boards.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     }
     return BoardListing(boards: boards, broken: broken);
+  }
+
+  /// Every readable board in full. Damaged ones are skipped (the board list
+  /// shows them).
+  Future<List<Board>> loadAllBoards() async {
+    final out = <Board>[];
+    if (!await _boardsDir.exists()) return out;
+    await for (final entity in _boardsDir.list()) {
+      if (entity is! Directory) continue;
+      try {
+        out.add(await _readBoard(entity));
+      } on SchemaException {
+        continue;
+      } on FileSystemException {
+        continue;
+      }
+    }
+    return out;
   }
 
   // ---- Single board -----------------------------------------------------
@@ -229,6 +255,7 @@ class BoardRepository {
   }) async {
     await writeAtomically(_boardFile(dir), BoardSchema.encode(board));
     await _addSnapshot(dir, board, label);
+    await onSaved?.call(board);
   }
 
   // ---- History ----------------------------------------------------------
@@ -317,6 +344,7 @@ class BoardRepository {
       File(_join(to.path, trashMetaFileName)),
       jsonEncode({'trashedAt': _now().toIso8601String()}),
     );
+    await onRemoved?.call(id);
   }
 
   Future<void> restoreFromTrash(String id) async {
@@ -329,6 +357,7 @@ class BoardRepository {
     final meta = File(_join(from.path, trashMetaFileName));
     if (await meta.exists()) await meta.delete();
     await from.rename(to.path);
+    if (onSaved != null) await onSaved!(await loadBoard(id));
   }
 
   Future<void> deleteForever(String id) async {

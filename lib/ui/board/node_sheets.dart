@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../model/node.dart';
 import '../theme.dart';
 import 'node_style.dart';
+import 'when_editor.dart';
 
 /// What the edit sheet returns.
 class NodeEdit {
@@ -12,6 +13,7 @@ class NodeEdit {
     required this.status,
     required this.color,
     required this.tags,
+    required this.when,
   });
 
   final String title;
@@ -19,22 +21,29 @@ class NodeEdit {
   final NodeStatus status;
   final String? color;
   final List<String> tags;
+  final WhenValue when;
 }
 
-Future<NodeEdit?> showEditSheet(BuildContext context, Node node) {
+Future<NodeEdit?> showEditSheet(
+  BuildContext context,
+  Node node, {
+  required int defaultLeadMinutes,
+}) {
   return showModalBottomSheet<NodeEdit>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (_) => _EditSheet(node: node),
+    builder: (_) =>
+        _EditSheet(node: node, defaultLeadMinutes: defaultLeadMinutes),
   );
 }
 
 class _EditSheet extends StatefulWidget {
-  const _EditSheet({required this.node});
+  const _EditSheet({required this.node, required this.defaultLeadMinutes});
 
   final Node node;
+  final int defaultLeadMinutes;
 
   @override
   State<_EditSheet> createState() => _EditSheetState();
@@ -47,6 +56,7 @@ class _EditSheetState extends State<_EditSheet> {
   late NodeStatus _status = widget.node.status;
   late String? _color = widget.node.color;
   late final List<String> _tags = [...widget.node.tags];
+  late WhenValue _when = WhenValue.of(widget.node);
 
   @override
   void dispose() {
@@ -71,6 +81,7 @@ class _EditSheetState extends State<_EditSheet> {
         status: _status,
         color: _color,
         tags: _tags,
+        when: _when,
       ),
     );
   }
@@ -127,6 +138,12 @@ class _EditSheetState extends State<_EditSheet> {
                 selected: {_status},
                 onSelectionChanged: (v) => setState(() => _status = v.first),
               ),
+            const SizedBox(height: Metrics.gutter),
+            WhenEditor(
+              value: _when,
+              defaultLeadMinutes: widget.defaultLeadMinutes,
+              onChanged: (w) => setState(() => _when = w),
+            ),
             const SizedBox(height: Metrics.gutter),
             Wrap(
               spacing: 10,

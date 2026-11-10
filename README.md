@@ -11,7 +11,8 @@ branch by branch, then track which paths you took and what comes next.
 
 Early development. Boards (create, rename, duplicate, trash, restore, revert
 to an earlier version), the tree canvas and outline view, task and decision
-nodes, and undo/redo work. Reminders and the Today view are next.
+nodes, undo/redo, reminders with repeats, the "Which one did you do?" decision
+prompt and the Today screen work. Voice notes and export/import are next.
 
 ## Building
 

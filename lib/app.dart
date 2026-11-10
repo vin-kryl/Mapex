@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'state/providers.dart';
-import 'ui/board_list_screen.dart';
+import 'ui/home_shell.dart';
 import 'ui/theme.dart';
 
 class MapexApp extends ConsumerWidget {
@@ -22,7 +22,7 @@ class MapexApp extends ConsumerWidget {
             .copyWith(textScaler: TextScaler.linear(settings.fontScale)),
         child: child!,
       ),
-      home: const BoardListScreen(),
+      home: const HomeShell(),
     );
   }
 }
