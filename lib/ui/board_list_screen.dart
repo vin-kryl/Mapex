@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/providers.dart';
 import '../storage/board_repository.dart';
-import 'board_screen.dart';
+import 'board/board_screen.dart';
 import 'dialogs.dart';
 import 'format.dart';
 import 'history_screen.dart';

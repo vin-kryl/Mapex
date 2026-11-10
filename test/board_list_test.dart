@@ -15,7 +15,15 @@ void main() {
     tmp = await Directory.systemTemp.createTemp('mapex_ui_');
   });
 
-  tearDown(() => tmp.delete(recursive: true));
+  // Synchronous on purpose: async file calls never finish inside a widget
+  // test's fake clock once the test body has ended.
+  tearDown(() {
+    try {
+      tmp.deleteSync(recursive: true);
+    } on FileSystemException {
+      // A save still in flight can recreate a file; the OS cleans temp.
+    }
+  });
 
   Future<void> pumpApp(WidgetTester tester) async {
     await tester.pumpWidget(
@@ -68,9 +76,9 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Side project');
     await tester.pump();
     await tester.tap(find.text('Create'));
-    await settle(tester, until: find.textContaining('tree view'));
-    expect(find.text('Side project'), findsWidgets);
-    expect(find.textContaining('tree view'), findsOneWidget);
+    await settle(tester, until: find.byTooltip('Outline view'));
+    // Title in the app bar and on the root node.
+    expect(find.text('Side project'), findsNWidgets(2));
   });
 
   testWidgets('moving to trash asks first', (tester) async {
