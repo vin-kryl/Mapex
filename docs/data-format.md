@@ -13,8 +13,10 @@ mapex/
   trash/<board id>/     boards moved to the trash, same layout, plus trashed.json
 ```
 
-- On Android the `mapex` folder sits in the app's files directory, on macOS in
-  the app's sandboxed Application Support folder.
+- The `mapex` folder sits in the app's private folder: the app's files
+  directory on Android, the sandboxed Application Support folder on macOS,
+  `%APPDATA%\Vineet Khankriyal\Mapex` on Windows and
+  `~/.local/share/com.apeaxis.mapex` on Linux.
 - `board.json` is written to a temporary file first and then renamed, so a
   crash mid-save never leaves a half-written board.
 - `history/` keeps the newest copies up to the **Versions kept per board**

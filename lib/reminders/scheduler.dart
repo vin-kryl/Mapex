@@ -27,7 +27,12 @@ class ReminderScheduler {
   /// Replaces every booked notification of [board] with a fresh plan.
   Future<void> syncBoard(Board board) => _serial(() async {
     final s = settings();
-    final planned = AlertPlanner.plan(board, s, _clock());
+    final planned = AlertPlanner.plan(
+      board,
+      s,
+      _clock(),
+      nativeRepeats: platform.repeatsNatively,
+    );
     await _cancelBoard(board.id, keep: {for (final a in planned) a.id});
     for (final alert in planned) {
       await platform.schedule(alert, sound: s.notificationSound);

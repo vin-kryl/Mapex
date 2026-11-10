@@ -6,30 +6,51 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
 import 'reminders/alert_platform.dart';
+import 'reminders/plan.dart';
 import 'settings/settings_store.dart';
 import 'state/providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // App-private folder: on Android the app's files dir, on macOS the
-  // sandboxed Application Support folder.
+  // App-private folder: the app's files dir on Android, the sandboxed
+  // Application Support folder on macOS, %APPDATA% on Windows and
+  // ~/.local/share on Linux.
   final support = await getApplicationSupportDirectory();
   final appDir = Directory('${support.path}${Platform.pathSeparator}mapex');
   await appDir.create(recursive: true);
   final settings = await SettingsStore(appDir).load();
 
-  final alerts = LocalAlertPlatform();
-  final container = ProviderContainer(
+  late final ProviderContainer container;
+  // If the system's notification service is not there (for example a Linux
+  // desktop without one), the app still runs, just without reminders.
+  AlertPlatform alerts = LocalAlertPlatform();
+  AlertPayload? launched;
+  try {
+    await alerts.init(
+      (payload) => container.read(pendingPromptProvider.notifier).show(payload),
+    );
+    launched = await alerts.launchPayload();
+  } on Object catch (e) {
+    debugPrint('Reminders are off: $e');
+    alerts = NoAlertPlatform();
+  }
+  container = ProviderContainer(
     overrides: [
       appDirProvider.overrideWithValue(appDir),
       initialSettingsProvider.overrideWithValue(settings),
       alertPlatformProvider.overrideWithValue(alerts),
     ],
   );
-  await alerts.init(
-    (payload) => container.read(pendingPromptProvider.notifier).show(payload),
-  );
-  final launched = await alerts.launchPayload();
+  if (alerts is LocalAlertPlatform) {
+    // Linux: reminders come from timers in the app, so book the next ones
+    // each time one fires.
+    alerts.inApp?.onFired = () async {
+      final boards = await container
+          .read(boardRepositoryProvider)
+          .loadAllBoards();
+      await container.read(reminderSchedulerProvider).syncAll(boards);
+    };
+  }
   if (launched != null) {
     container.read(pendingPromptProvider.notifier).show(launched);
   }

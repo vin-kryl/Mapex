@@ -45,6 +45,28 @@ The key file and its password are never committed. `android/key.properties`,
 7. In the same entry, attach the file `mapex-upload.jks`. To find it, in
    Finder press Cmd + Shift + G, type `~/Keys` and press Enter.
 
+## Let GitHub sign the APKs (once)
+
+The Release workflow signs the Android APK with the upload key, so every
+download is signed with the same key and updates install over the old
+version. GitHub keeps the key as two encrypted secrets that nobody can read
+back.
+
+1. In Terminal, paste this and press Enter. It copies the key file to the
+   clipboard as text:
+
+   ```sh
+   base64 -i ~/Keys/mapex-upload.jks | pbcopy
+   ```
+
+2. Open https://github.com/vin-kryl/Mapex/settings/secrets/actions/new
+3. Name: `ANDROID_KEYSTORE`. Secret: press Cmd + V. Click **Add secret**.
+4. Open the same link again. Name: `ANDROID_KEYSTORE_PASSWORD`. Secret: the
+   password from the password manager. Click **Add secret**.
+
+The key alias is `upload`, and the key password is the same as the keystore
+password, which is how `keytool` makes it.
+
 ## Use the key for a Play build (at release time)
 
 1. In the project folder on the Mac, open the `android` folder.
