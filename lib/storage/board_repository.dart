@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:uuid/uuid.dart';
 
@@ -8,6 +9,16 @@ import '../model/json_read.dart';
 import '../model/node.dart';
 import '../model/schema.dart';
 import 'atomic_file.dart';
+import 'board_package.dart';
+
+/// What to do when an imported board has the same id as one already here.
+enum ImportConflict {
+  /// The board here moves to the trash and the imported one takes its place.
+  replace,
+
+  /// The imported board is added under a new id, next to the one here.
+  keepBoth,
+}
 
 /// What the board list shows, without holding whole trees in memory.
 class BoardSummary {
@@ -256,6 +267,107 @@ class BoardRepository {
     await writeAtomically(_boardFile(dir), BoardSchema.encode(board));
     await _addSnapshot(dir, board, label);
     await onSaved?.call(board);
+  }
+
+  // ---- Import and export ------------------------------------------------
+
+  /// Whether a board with this id is already in the board list.
+  Future<bool> hasBoard(String id) => boardDir(id).exists();
+
+  /// Writes an imported board and its audio. With [ImportConflict.replace]
+  /// the board already here goes to the trash first, so nothing is lost.
+  Future<Board> importBoard(
+    BoardPackage package, {
+    ImportConflict conflict = ImportConflict.keepBoth,
+  }) async {
+    var board = package.board;
+    if (await hasBoard(board.id)) {
+      switch (conflict) {
+        case ImportConflict.replace:
+          await moveToTrash(board.id);
+        case ImportConflict.keepBoth:
+          board = board.copyWith(id: _newId());
+      }
+    }
+    final dir = boardDir(board.id);
+    final audioDir = Directory(_join(dir.path, audioDirName));
+    await audioDir.create(recursive: true);
+    await _historyDir(dir).create(recursive: true);
+    for (final MapEntry(:key, :value) in package.audio.entries) {
+      if (!BoardPackager.isSafeAudioPath(key)) continue;
+      await writeBytesAtomically(audioFile(board.id, key), value);
+    }
+    final now = _now();
+    board = board.copyWith(updatedAt: now);
+    await _write(dir, board, label: 'Imported');
+    return board;
+  }
+
+  /// The file behind a voice note's relative path.
+  File audioFile(String boardId, String relativePath) {
+    if (!BoardPackager.isSafeAudioPath(relativePath)) {
+      throw ArgumentError.value(relativePath, 'relativePath');
+    }
+    return File(
+      _join(
+        _join(boardDir(boardId).path, audioDirName),
+        relativePath.substring(audioDirName.length + 1),
+      ),
+    );
+  }
+
+  Future<Uint8List?> readAudio(String boardId, String relativePath) async {
+    try {
+      final file = audioFile(boardId, relativePath);
+      return await file.exists() ? await file.readAsBytes() : null;
+    } on ArgumentError {
+      return null;
+    }
+  }
+
+  /// Deletes audio files that neither the board nor any of its history
+  /// snapshots point at. Kept files can still come back through undo or
+  /// a revert.
+  Future<int> pruneAudio(String boardId) async {
+    final dir = boardDir(boardId);
+    final audioDir = Directory(_join(dir.path, audioDirName));
+    if (!await audioDir.exists()) return 0;
+    final used = <String>{};
+    void collect(Object? node) {
+      if (node is! Map) return;
+      final notes = node['voiceNotes'];
+      if (notes is List) {
+        for (final v in notes) {
+          if (v is Map && v['path'] is String) used.add(v['path'] as String);
+        }
+      }
+      final kids = node['children'];
+      if (kids is List) kids.forEach(collect);
+    }
+
+    try {
+      collect(
+        (jsonDecode(await _boardFile(dir).readAsString()) as Map)['root'],
+      );
+      for (final f in await _historyFiles(dir)) {
+        final map = jsonDecode(await f.readAsString());
+        if (map is Map && map['board'] is Map) {
+          collect((map['board'] as Map)['root']);
+        }
+      }
+    } on Object {
+      // If anything cannot be read, keep every file.
+      return 0;
+    }
+    var removed = 0;
+    await for (final e in audioDir.list()) {
+      if (e is! File) continue;
+      if (!used.contains('$audioDirName/${_baseName(e.path)}')) {
+        await e.delete();
+        removed++;
+      }
+    }
+    return removed;
   }
 
   // ---- History ----------------------------------------------------------

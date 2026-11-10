@@ -156,6 +156,17 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
               _Section(
+                title: 'Export with voice notes',
+                subtitle:
+                    'On: export suggests a .mapex file with the audio. '
+                    'Off: plain JSON first.',
+                child: Switch(
+                  value: s.exportWithAudio,
+                  onChanged: (v) =>
+                      notifier.update(s.copyWith(exportWithAudio: v)),
+                ),
+              ),
+              _Section(
                 title: 'Versions kept per board',
                 subtitle: 'Older versions are removed past this number.',
                 child: _NumberField(

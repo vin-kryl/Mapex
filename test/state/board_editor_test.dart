@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mapex/model/node.dart';
 import 'package:mapex/model/reminder.dart';
 import 'package:mapex/model/tree_ops.dart';
+import 'package:mapex/model/voice_note.dart';
 import 'package:mapex/reminders/timing.dart';
 import 'package:mapex/settings/app_settings.dart';
 import 'package:mapex/state/board_editor.dart';
@@ -177,5 +178,28 @@ void main() {
       expect(node().reminder, isNull);
       await editor().flush();
     });
+  });
+  test('voice notes add, re-record, delete and undo', () async {
+    final rootId = state().board.root.id;
+    VoiceNote v(String id) => VoiceNote(
+      id: id,
+      path: 'audio/$id.m4a',
+      createdAt: DateTime.utc(2026, 11, 10),
+    );
+    List<String> ids() => [
+      for (final n in TreeOps.find(state().board.root, rootId)!.voiceNotes)
+        n.id,
+    ];
+    final target = editor().newVoicePath('m4a');
+    expect(target.path, 'audio/${target.id}.m4a');
+    editor().addVoiceNote(rootId, v('a'));
+    editor().addVoiceNote(rootId, v('b'));
+    editor().replaceVoiceNote(rootId, 'a', v('c'));
+    expect(ids(), ['c', 'b']);
+    editor().removeVoiceNote(rootId, 'c');
+    expect(ids(), ['b']);
+    editor().undo();
+    expect(ids(), ['c', 'b']);
+    await editor().flush();
   });
 }

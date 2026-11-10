@@ -43,3 +43,16 @@ In short:
 runs each migration in `lib/model/schema.dart` in turn until the file is at the
 current version. A file from a newer app is refused with a message asking to
 update.
+
+## Export files
+
+- `.mapex` is a zip with `board.json` at the top and the voice notes'
+  audio in `audio/`, at the same relative paths `board.json` uses.
+- `.json` is `board.json` on its own. Voice notes are left out, since their
+  audio is not in the file.
+
+On import the file is checked and migrated to the current schema version.
+Anything in the zip other than `board.json` and the audio files it points
+at is ignored. If a board with the same id is already there, the app asks
+whether to replace it (the old one goes to the trash) or keep both (the
+import gets a new id).
