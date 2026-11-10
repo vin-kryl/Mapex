@@ -28,22 +28,31 @@ Future<NodeEdit?> showEditSheet(
   BuildContext context,
   Node node, {
   required int defaultLeadMinutes,
+  Widget? voiceNotes,
 }) {
   return showModalBottomSheet<NodeEdit>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (_) =>
-        _EditSheet(node: node, defaultLeadMinutes: defaultLeadMinutes),
+    builder: (_) => _EditSheet(
+      node: node,
+      defaultLeadMinutes: defaultLeadMinutes,
+      voiceNotes: voiceNotes,
+    ),
   );
 }
 
 class _EditSheet extends StatefulWidget {
-  const _EditSheet({required this.node, required this.defaultLeadMinutes});
+  const _EditSheet({
+    required this.node,
+    required this.defaultLeadMinutes,
+    this.voiceNotes,
+  });
 
   final Node node;
   final int defaultLeadMinutes;
+  final Widget? voiceNotes;
 
   @override
   State<_EditSheet> createState() => _EditSheetState();
@@ -120,6 +129,10 @@ class _EditSheetState extends State<_EditSheet> {
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(hintText: 'Notes'),
             ),
+            if (widget.voiceNotes case final voice?) ...[
+              const SizedBox(height: Metrics.gap),
+              voice,
+            ],
             const SizedBox(height: Metrics.gutter),
             if (!eliminated && widget.node.type == NodeType.task)
               SegmentedButton<NodeStatus>(

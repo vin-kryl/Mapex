@@ -11,6 +11,7 @@ import '../dialogs.dart';
 import '../theme.dart';
 import 'canvas_view.dart';
 import 'node_sheets.dart';
+import 'voice_notes.dart';
 import 'outline_view.dart';
 
 enum BoardView { canvas, outline }
@@ -197,6 +198,7 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
       context,
       node,
       defaultLeadMinutes: ref.read(settingsProvider).defaultReminderLeadMinutes,
+      voiceNotes: VoiceNotesSection(boardId: widget.boardId, nodeId: node.id),
     );
     if (result == null) return;
     if (result.when.reminder != null && node.reminder == null) {

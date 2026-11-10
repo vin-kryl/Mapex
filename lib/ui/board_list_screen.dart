@@ -5,13 +5,14 @@ import '../state/providers.dart';
 import '../storage/board_repository.dart';
 import 'board/board_screen.dart';
 import 'dialogs.dart';
+import 'export_import.dart';
 import 'format.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
 import 'theme.dart';
 import 'trash_screen.dart';
 
-enum _BoardAction { rename, duplicate, history, trash }
+enum _BoardAction { rename, duplicate, export, history, trash }
 
 class BoardListScreen extends ConsumerWidget {
   const BoardListScreen({super.key});
@@ -23,6 +24,11 @@ class BoardListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Boards'),
         actions: [
+          IconButton(
+            tooltip: 'Import a board',
+            icon: const Icon(Icons.file_open_outlined),
+            onPressed: () => importBoard(context, ref),
+          ),
           IconButton(
             tooltip: 'Trash',
             icon: const Icon(Icons.delete_outline),
@@ -163,6 +169,7 @@ class _BoardTile extends ConsumerWidget {
               value: _BoardAction.duplicate,
               child: Text('Duplicate'),
             ),
+            PopupMenuItem(value: _BoardAction.export, child: Text('Export')),
             PopupMenuItem(value: _BoardAction.history, child: Text('History')),
             PopupMenuItem(
               value: _BoardAction.trash,
@@ -207,6 +214,8 @@ class _BoardTile extends ConsumerWidget {
         await repo.duplicateBoard(board.id, title: '${board.title} copy');
         refresh();
         if (context.mounted) showMessage(context, 'Board duplicated');
+      case _BoardAction.export:
+        await exportBoard(context, ref, boardId: board.id);
       case _BoardAction.history:
         await Navigator.of(context).push(
           MaterialPageRoute<void>(

@@ -5,6 +5,7 @@ import '../model/board.dart';
 import '../model/node.dart';
 import '../model/reminder.dart';
 import '../model/tree_ops.dart';
+import '../model/voice_note.dart';
 import '../reminders/timing.dart';
 import 'providers.dart';
 
@@ -40,7 +41,11 @@ class BoardEditor extends AsyncNotifier<EditorState> {
 
   @override
   Future<EditorState> build() async {
-    final board = await ref.read(boardRepositoryProvider).loadBoard(boardId);
+    final repo = ref.read(boardRepositoryProvider);
+    final board = await repo.loadBoard(boardId);
+    // Audio left behind by deleted voice notes is cleared when the board
+    // opens, once nothing (not even history) points at it.
+    await repo.pruneAudio(boardId);
     return EditorState(board: board);
   }
 
@@ -245,6 +250,52 @@ class BoardEditor extends AsyncNotifier<EditorState> {
 
   /// Whether ticking a repeating task done rolls it to its next time.
   static const rollRepeatsForward = true;
+
+  // ---- Voice notes ------------------------------------------------------
+
+  /// A fresh id and the relative path its audio should be recorded to.
+  ({String id, String path}) newVoicePath(String extension) {
+    final id = _newId();
+    return (id: id, path: 'audio/$id.$extension');
+  }
+
+  void addVoiceNote(String nodeId, VoiceNote note) => apply(
+    'Voice note',
+    (root, now) => TreeOps.update(
+      root,
+      nodeId,
+      (n) => n.copyWith(voiceNotes: [...n.voiceNotes, note], updatedAt: now),
+    ),
+  );
+
+  /// Re-record: [note] takes the place of [oldId], in the same position.
+  void replaceVoiceNote(String nodeId, String oldId, VoiceNote note) => apply(
+    'Re-record',
+    (root, now) => TreeOps.update(
+      root,
+      nodeId,
+      (n) => n.copyWith(
+        voiceNotes: [for (final v in n.voiceNotes) v.id == oldId ? note : v],
+        updatedAt: now,
+      ),
+    ),
+  );
+
+  /// The audio file stays on disk until nothing points at it, so undo can
+  /// bring the note back.
+  void removeVoiceNote(String nodeId, String noteId) => apply(
+    'Delete voice note',
+    (root, now) => TreeOps.update(root, nodeId, (n) {
+      if (!n.voiceNotes.any((v) => v.id == noteId)) return n;
+      return n.copyWith(
+        voiceNotes: [
+          for (final v in n.voiceNotes)
+            if (v.id != noteId) v,
+        ],
+        updatedAt: now,
+      );
+    }),
+  );
 
   void setStatus(String id, NodeStatus status) =>
       apply('Status', (root, now) => TreeOps.setStatus(root, id, status, now));
