@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,19 +47,33 @@ Future<void> exportBoard(
 
 /// Picks a .mapex or .json file, checks it, and adds it to the board list.
 Future<void> importBoard(BuildContext context, WidgetRef ref) async {
-  final repo = ref.read(boardRepositoryProvider);
-  final BoardPackage package;
+  final Uint8List bytes;
   try {
     final file = await FilePicker.pickFile(dialogTitle: 'Import a board');
     if (file == null) return;
-    package = BoardPackager.read(await file.readAsBytes());
+    bytes = await file.readAsBytes();
+  } on Object catch (e) {
+    if (context.mounted) showMessage(context, 'Could not open the file: $e');
+    return;
+  }
+  if (context.mounted) await importBytes(context, ref, bytes);
+}
+
+/// Checks a board file's contents and adds it to the board list, asking
+/// first if a board with the same id is already there.
+Future<void> importBytes(
+  BuildContext context,
+  WidgetRef ref,
+  Uint8List bytes,
+) async {
+  final repo = ref.read(boardRepositoryProvider);
+  final BoardPackage package;
+  try {
+    package = BoardPackager.read(bytes);
   } on SchemaException catch (e) {
     if (context.mounted) {
       await _explain(context, 'This file could not be imported: ${e.message}.');
     }
-    return;
-  } on Object catch (e) {
-    if (context.mounted) showMessage(context, 'Could not open the file: $e');
     return;
   }
   if (!context.mounted) return;

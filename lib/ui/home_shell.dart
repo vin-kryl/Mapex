@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../platform/incoming_files.dart';
 import '../reminders/plan.dart';
 import '../state/providers.dart';
 import 'board_list_screen.dart';
+import 'export_import.dart';
 import 'prompt_sheet.dart';
 import 'today_screen.dart';
 
 /// Today and Boards, with the app opening on Today. Also shows the prompt
-/// for a tapped notification.
+/// for a tapped notification, and imports board files opened from outside.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -28,6 +30,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final pending = ref.read(pendingPromptProvider);
       if (pending != null) _openPrompt(pending);
+      _importIncoming();
     });
   }
 
@@ -54,10 +57,31 @@ class _HomeShellState extends ConsumerState<HomeShell>
     ref.invalidate(allBoardsProvider);
   }
 
+  bool _importing = false;
+
+  /// Board files opened from outside the app, one after another.
+  Future<void> _importIncoming() async {
+    if (_importing) return;
+    _importing = true;
+    try {
+      while (mounted) {
+        final file = ref.read(incomingFilesProvider.notifier).take();
+        if (file == null) break;
+        setState(() => _tab = 1);
+        await importBytes(context, ref, file.bytes);
+      }
+    } finally {
+      _importing = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(pendingPromptProvider, (_, next) {
       if (next != null) _openPrompt(next);
+    });
+    ref.listen(incomingFilesProvider, (_, next) {
+      if (next.isNotEmpty) _importIncoming();
     });
     return Scaffold(
       body: IndexedStack(

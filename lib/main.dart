@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,12 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
+import 'platform/incoming_files.dart';
 import 'reminders/alert_platform.dart';
 import 'reminders/plan.dart';
 import 'settings/settings_store.dart';
 import 'state/providers.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   // App-private folder: the app's files dir on Android, the sandboxed
   // Application Support folder on macOS, %APPDATA% on Windows and
@@ -54,6 +56,15 @@ Future<void> main() async {
   if (launched != null) {
     container.read(pendingPromptProvider.notifier).show(launched);
   }
+
+  // Board files opened from outside: Finder, Files, the share sheet, or a
+  // path passed on Windows and Linux.
+  unawaited(
+    IncomingFileSource.listen(
+      args,
+      (file) => container.read(incomingFilesProvider.notifier).add(file),
+    ),
+  );
 
   runApp(
     UncontrolledProviderScope(container: container, child: const MapexApp()),

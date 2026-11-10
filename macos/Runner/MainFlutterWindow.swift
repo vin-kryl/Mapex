@@ -10,6 +10,11 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
+    let files = FlutterMethodChannel(
+      name: "mapex/files",
+      binaryMessenger: flutterViewController.engine.binaryMessenger)
+    (NSApp.delegate as? AppDelegate)?.attachFilesChannel(files)
+
     super.awakeFromNib()
   }
 }
