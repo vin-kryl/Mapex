@@ -17,7 +17,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.apeaxis.mapex"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_local_notifications needs 37 to compile against.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
