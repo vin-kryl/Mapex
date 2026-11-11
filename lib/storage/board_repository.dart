@@ -8,6 +8,7 @@ import '../model/board.dart';
 import '../model/json_read.dart';
 import '../model/node.dart';
 import '../model/schema.dart';
+import '../model/templates.dart';
 import 'atomic_file.dart';
 import 'board_package.dart';
 
@@ -216,6 +217,13 @@ class BoardRepository {
     await _historyDir(dir).create(recursive: true);
     await _write(dir, board, label: 'Created');
     return board;
+  }
+
+  /// A new board that starts with [template]'s steps.
+  Future<Board> createFromTemplate(String title, BoardTemplate template) async {
+    final board = await createBoard(title, rootType: template.rootType);
+    final root = template.fill(board.root, _newId, _now());
+    return saveBoard(board.copyWith(root: root), label: 'From a template');
   }
 
   /// Saves [board] and records a history snapshot labelled [label].
