@@ -8,7 +8,6 @@ plugins {
 }
 
 // Release signing reads android/key.properties, which is never committed.
-// See docs/signing.md.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {

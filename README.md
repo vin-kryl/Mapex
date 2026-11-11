@@ -9,11 +9,11 @@ branch by branch, then track which paths you took and what comes next.
 
 ## Status
 
-Early development. Boards (create, rename, duplicate, trash, restore, revert
-to an earlier version), the tree canvas and outline view, task and decision
-nodes, undo/redo, reminders with repeats, the "Which one did you do?" decision
+Boards (create, rename, duplicate, trash, restore, revert to an earlier
+version), the tree canvas and outline view, task and decision nodes,
+undo/redo, reminders with repeats, the "Which one did you do?" decision
 prompt, the Today screen, voice notes, .sortle / JSON export and import, and
-custom colours and corner roundness work on all four platforms.
+a configurable look work on all four platforms.
 
 ## Download
 
@@ -51,11 +51,11 @@ libgstreamer-plugins-base1.0-dev`.
 
 To publish a release, run the **Release** workflow from the Actions tab and
 type the version. It builds all four apps and attaches them to a GitHub
-Release. The Android APK is signed with the key in the repository's secrets
-([docs/signing.md](docs/signing.md)).
+Release. The Android APK is signed with the key stored in the
+`ANDROID_KEYSTORE` and `ANDROID_KEYSTORE_PASSWORD` repository secrets (key
+alias `upload`).
 
 - [Data format](docs/data-format.md)
-- [Android signing key](docs/signing.md)
 
 ## Licence
 
