@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../model/node.dart';
 import '../../model/tree_ops.dart';
 import '../../settings/app_settings.dart';
+import '../theme.dart';
 import 'node_card.dart';
 import 'tree_layout.dart';
 
@@ -214,7 +215,8 @@ class _CanvasViewState extends State<CanvasView> {
           constraints.biggest,
         );
 
-        final scheme = Theme.of(context).colorScheme;
+        final t = Tones.of(context);
+        final look = Look.of(context);
         final nodes = {
           for (final e in TreeOps.walk(widget.root)) e.node.id: e.node,
         };
@@ -236,7 +238,7 @@ class _CanvasViewState extends State<CanvasView> {
           ?_dragId,
         ];
 
-        return InteractiveViewer(
+        final viewer = InteractiveViewer(
           transformationController: _controller,
           constrained: false,
           minScale: CanvasView.minScale,
@@ -249,20 +251,13 @@ class _CanvasViewState extends State<CanvasView> {
               children: [
                 Positioned.fill(
                   child: CustomPaint(
-                    painter: _GridPainter(
-                      color: scheme.outlineVariant,
-                      step: CanvasView.gridStep,
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: CustomPaint(
                     painter: _EdgePainter(
                       rects: shownRects,
                       edges: layout.edges,
                       origin: origin,
-                      color: scheme.outline,
-                      takenColor: scheme.primary,
+                      direction: widget.direction,
+                      color: t.wire,
+                      takenColor: look.taken,
                       takenIds: taken,
                       fadedIds: {
                         for (final n in nodes.values)
@@ -302,8 +297,47 @@ class _CanvasViewState extends State<CanvasView> {
             ),
           ),
         );
+        return ColoredBox(
+          color: t.canvas,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _GridPainter(
+                    transform: _controller,
+                    color: t.gridDot,
+                    step: CanvasView.gridStep,
+                  ),
+                ),
+              ),
+              viewer,
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: _ZoomControls(
+                  transform: _controller,
+                  onZoom: (f) => _zoomBy(f, constraints.biggest),
+                  onFit: () => setState(() => _centeredFor = null),
+                ),
+              ),
+            ],
+          ),
+        );
       },
     );
+  }
+
+  void _zoomBy(double factor, Size viewport) {
+    final next = (_scale * factor).clamp(
+      CanvasView.minScale,
+      CanvasView.maxScale,
+    );
+    final f = next / _scale;
+    final c = viewport.center(Offset.zero);
+    _controller.value = Matrix4.translationValues(c.dx, c.dy, 0)
+      ..scaleByDouble(f, f, 1, 1)
+      ..translateByDouble(-c.dx, -c.dy, 0, 1)
+      ..multiply(_controller.value);
   }
 }
 
@@ -363,9 +397,9 @@ class _Draggable extends StatelessWidget {
           child: DecoratedBox(
             position: DecorationPosition.foreground,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Look.of(context).radius),
               border: target
-                  ? Border.all(color: scheme.primary, width: 3)
+                  ? Border.all(color: scheme.primary, width: 2.5)
                   : null,
               boxShadow: dragging
                   ? [
@@ -385,18 +419,31 @@ class _Draggable extends StatelessWidget {
   }
 }
 
+/// Dots behind the board that pan and zoom with it.
 class _GridPainter extends CustomPainter {
-  _GridPainter({required this.color, required this.step});
+  _GridPainter({
+    required this.transform,
+    required this.color,
+    required this.step,
+  }) : super(repaint: transform);
 
+  final TransformationController transform;
   final Color color;
   final double step;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final m = transform.value;
+    final scale = m.getMaxScaleOnAxis();
+    // Too dense when zoomed far out: skip every other dot.
+    final gap = step * scale * (scale < 0.5 ? 2 : 1);
+    final dx = m.getTranslation().x % gap;
+    final dy = m.getTranslation().y % gap;
     final paint = Paint()..color = color;
-    for (var x = step / 2; x < size.width; x += step) {
-      for (var y = step / 2; y < size.height; y += step) {
-        canvas.drawCircle(Offset(x, y), 1, paint);
+    final r = (1.1 * scale).clamp(0.7, 1.4);
+    for (var x = dx; x < size.width; x += gap) {
+      for (var y = dy; y < size.height; y += gap) {
+        canvas.drawCircle(Offset(x, y), r, paint);
       }
     }
   }
@@ -406,11 +453,75 @@ class _GridPainter extends CustomPainter {
       old.color != color || old.step != step;
 }
 
+/// Zoom out, zoom level, zoom in, and fit, in one small pill.
+class _ZoomControls extends StatelessWidget {
+  const _ZoomControls({
+    required this.transform,
+    required this.onZoom,
+    required this.onFit,
+  });
+
+  final TransformationController transform;
+  final ValueChanged<double> onZoom;
+  final VoidCallback onFit;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Tones.of(context);
+    Widget button(String tip, IconData icon, VoidCallback onTap) => Tooltip(
+      message: tip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: Icon(icon, size: 16, color: t.secondary),
+        ),
+      ),
+    );
+    return Material(
+      color: t.card.withValues(alpha: 0.94),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(9),
+        side: BorderSide(color: t.hairline, width: 0.5),
+      ),
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          button('Zoom out', Icons.remove_rounded, () => onZoom(1 / 1.25)),
+          ValueListenableBuilder(
+            valueListenable: transform,
+            builder: (context, m, _) => SizedBox(
+              width: 42,
+              child: Text(
+                '${(m.getMaxScaleOnAxis() * 100).round()}%',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: t.secondary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+          ),
+          button('Zoom in', Icons.add_rounded, () => onZoom(1.25)),
+          Container(width: 0.5, height: 18, color: t.hairline),
+          button('Fit to screen', Icons.fit_screen_outlined, onFit),
+        ],
+      ),
+    );
+  }
+}
+
 class _EdgePainter extends CustomPainter {
   _EdgePainter({
     required this.rects,
     required this.edges,
     required this.origin,
+    required this.direction,
     required this.color,
     required this.takenColor,
     required this.takenIds,
@@ -420,6 +531,7 @@ class _EdgePainter extends CustomPainter {
   final Map<String, Rect> rects;
   final List<(String, String)> edges;
   final Offset origin;
+  final LayoutDirection direction;
   final Color color;
   final Color takenColor;
   final Set<String> takenIds;
@@ -436,54 +548,53 @@ class _EdgePainter extends CustomPainter {
         ..color = taken
             ? takenColor
             : faded
-            ? color.withValues(alpha: 0.4)
+            ? color.withValues(alpha: 0.45)
             : color
-        ..strokeWidth = taken ? 2.5 : 1.5
-        ..style = PaintingStyle.stroke;
-      final path = wire(a, b);
-      if (faded) {
-        _dash(canvas, path, paint);
-      } else {
-        canvas.drawPath(path, paint);
-      }
+        ..strokeWidth = taken ? 1.6 : 1.1
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
+      final path = wire(a, b, direction);
+      canvas.drawPath(path, paint);
       // A small port where the wire leaves the parent.
       final start = path.computeMetrics().first.getTangentForOffset(0)!;
-      canvas.drawCircle(start.position, 3.5, Paint()..color = paint.color);
+      canvas.drawCircle(start.position, 2.8, Paint()..color = paint.color);
     }
   }
 
   /// A smooth curve between two nodes, leaving from whichever sides face
-  /// each other, so it reads well wherever the nodes were dragged.
-  static Path wire(Rect a, Rect b) {
-    final d = b.center - a.center;
-    final sideways = d.dx.abs() > d.dy.abs() * 1.5;
+  /// each other, so it reads well wherever the nodes were dragged. When the
+  /// nodes are clear of each other along the board's direction, that
+  /// direction wins.
+  static Path wire(Rect a, Rect b, LayoutDirection direction) {
+    const clear = 8.0;
+    final below = b.top >= a.bottom + clear;
+    final above = b.bottom <= a.top - clear;
+    final right = b.left >= a.right + clear;
+    final left = b.right <= a.left - clear;
+    final vertical = direction == LayoutDirection.topDown
+        ? (below || above)
+        : !(right || left) && (below || above);
     final Offset start, end, bend;
-    if (sideways) {
-      start = d.dx >= 0 ? a.centerRight : a.centerLeft;
-      end = d.dx >= 0 ? b.centerLeft : b.centerRight;
+    if (vertical) {
+      final down = b.center.dy >= a.center.dy;
+      start = down ? a.bottomCenter : a.topCenter;
+      end = down ? b.topCenter : b.bottomCenter;
       bend =
-          Offset(math.max((end.dx - start.dx).abs() / 2, 30), 0) *
-          (d.dx >= 0 ? 1 : -1);
+          Offset(0, math.max((end.dy - start.dy).abs() / 2, 24)) *
+          (down ? 1 : -1);
     } else {
-      start = d.dy >= 0 ? a.bottomCenter : a.topCenter;
-      end = d.dy >= 0 ? b.topCenter : b.bottomCenter;
+      final toRight = b.center.dx >= a.center.dx;
+      start = toRight ? a.centerRight : a.centerLeft;
+      end = toRight ? b.centerLeft : b.centerRight;
       bend =
-          Offset(0, math.max((end.dy - start.dy).abs() / 2, 30)) *
-          (d.dy >= 0 ? 1 : -1);
+          Offset(math.max((end.dx - start.dx).abs() / 2, 24), 0) *
+          (toRight ? 1 : -1);
     }
     final c1 = start + bend;
     final c2 = end - bend;
     return Path()
       ..moveTo(start.dx, start.dy)
       ..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
-  }
-
-  static void _dash(Canvas canvas, Path path, Paint paint) {
-    for (final metric in path.computeMetrics()) {
-      for (var d = 0.0; d < metric.length; d += 10) {
-        canvas.drawPath(metric.extractPath(d, d + 5), paint);
-      }
-    }
   }
 
   @override

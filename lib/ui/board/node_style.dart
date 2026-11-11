@@ -1,12 +1,49 @@
 import 'package:flutter/material.dart';
 
 import '../../model/node.dart';
+import '../../reminders/timing.dart';
+import '../format.dart';
 import '../theme.dart';
 
 /// Shared look for a node in the canvas and the outline.
 abstract final class NodeStyle {
   /// How faded eliminated nodes are.
-  static const eliminatedOpacity = 0.45;
+  static const eliminatedOpacity = 0.42;
+
+  /// The one quiet line under a node's title, or null for none.
+  static ({String text, DetailTone tone})? detail(
+    Node n,
+    DateTime now, {
+    bool taken = false,
+  }) {
+    if (n.status == NodeStatus.eliminated) {
+      return (text: 'Not picked', tone: DetailTone.plain);
+    }
+    final day = Timing.day(n);
+    if (day != null && Timing.isOpen(n)) {
+      final due = Timing.dueAt(n);
+      final late = (due ?? day.add(const Duration(days: 1))).isBefore(now);
+      final when = shortDay(day, now);
+      return (
+        text: n.time == null ? when : '$when ${n.time}',
+        tone: late ? DetailTone.late : DetailTone.plain,
+      );
+    }
+    if (n.type == NodeType.decision) {
+      final picked = n.chosenChildIds.length;
+      return (
+        text: picked == 0
+            ? 'Decision · ${n.children.length} options'
+            : 'Decision · $picked picked',
+        tone: DetailTone.plain,
+      );
+    }
+    if (taken) return (text: 'Picked', tone: DetailTone.taken);
+    if (n.status == NodeStatus.notYet) {
+      return (text: 'Not yet', tone: DetailTone.plain);
+    }
+    return null;
+  }
 
   static Color? parseColor(String? hex) {
     if (hex == null) return null;
@@ -46,3 +83,5 @@ abstract final class NodeStyle {
     };
   }
 }
+
+enum DetailTone { plain, late, taken }

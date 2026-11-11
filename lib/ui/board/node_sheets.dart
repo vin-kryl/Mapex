@@ -36,30 +36,49 @@ Future<NodeEdit?> showEditSheet(
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (_) => _EditSheet(
-      node: node,
-      defaultLeadMinutes: defaultLeadMinutes,
-      voiceNotes: voiceNotes,
+    builder: (sheet) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheet).bottom),
+      child: NodeForm(
+        node: node,
+        defaultLeadMinutes: defaultLeadMinutes,
+        voiceNotes: voiceNotes,
+        autofocus: true,
+        onSave: (edit) => Navigator.of(sheet).pop(edit),
+      ),
     ),
   );
 }
 
-class _EditSheet extends StatefulWidget {
-  const _EditSheet({
+/// Every field of a node, with a Save button. Used in the edit sheet on
+/// phones and in the inspector beside the board on bigger screens.
+class NodeForm extends StatefulWidget {
+  const NodeForm({
+    super.key,
     required this.node,
     required this.defaultLeadMinutes,
+    required this.onSave,
     this.voiceNotes,
+    this.autofocus = false,
+    this.padding = const EdgeInsets.fromLTRB(
+      Metrics.gutter,
+      0,
+      Metrics.gutter,
+      Metrics.gutter,
+    ),
   });
 
   final Node node;
   final int defaultLeadMinutes;
+  final ValueChanged<NodeEdit> onSave;
   final Widget? voiceNotes;
+  final bool autofocus;
+  final EdgeInsets padding;
 
   @override
-  State<_EditSheet> createState() => _EditSheetState();
+  State<NodeForm> createState() => _NodeFormState();
 }
 
-class _EditSheetState extends State<_EditSheet> {
+class _NodeFormState extends State<NodeForm> {
   late final _title = TextEditingController(text: widget.node.title);
   late final _notes = TextEditingController(text: widget.node.notes);
   final _tag = TextEditingController();
@@ -84,7 +103,7 @@ class _EditSheetState extends State<_EditSheet> {
 
   void _save() {
     if (_title.text.trim().isEmpty) return;
-    Navigator.of(context).pop(
+    widget.onSave(
       NodeEdit(
         title: _title.text.trim(),
         notes: _notes.text,
@@ -98,122 +117,120 @@ class _EditSheetState extends State<_EditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final tones = Tones.of(context);
     final eliminated = widget.node.status == NodeStatus.eliminated;
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          Metrics.gutter,
-          0,
-          Metrics.gutter,
-          Metrics.gutter,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _title,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-              decoration: const InputDecoration(
-                hintText: 'Title',
-                border: InputBorder.none,
-              ),
-              onChanged: (_) => setState(() {}),
+    return SingleChildScrollView(
+      padding: widget.padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _title,
+            autofocus: widget.autofocus,
+            textCapitalization: TextCapitalization.sentences,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.3,
             ),
-            TextField(
-              controller: _notes,
-              minLines: 3,
-              maxLines: 8,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(hintText: 'Notes'),
+            decoration: const InputDecoration(
+              hintText: 'Title',
+              border: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: false,
+              contentPadding: EdgeInsets.symmetric(vertical: 8),
             ),
-            if (widget.voiceNotes case final voice?) ...[
-              const SizedBox(height: Metrics.gap),
-              voice,
-            ],
-            const SizedBox(height: Metrics.gutter),
-            if (!eliminated && widget.node.type == NodeType.task)
-              SegmentedButton<NodeStatus>(
-                showSelectedIcon: false,
-                segments: [
-                  for (final s in [
-                    NodeStatus.pending,
-                    NodeStatus.done,
-                    NodeStatus.notYet,
-                  ])
-                    ButtonSegment(
-                      value: s,
-                      label: Text(NodeStyle.statusLabel(s)),
-                    ),
-                ],
-                selected: {_status},
-                onSelectionChanged: (v) => setState(() => _status = v.first),
-              ),
-            const SizedBox(height: Metrics.gutter),
-            WhenEditor(
-              value: _when,
-              defaultLeadMinutes: widget.defaultLeadMinutes,
-              onChanged: (w) => setState(() => _when = w),
-            ),
-            const SizedBox(height: Metrics.gutter),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                ColorDot(
-                  color: scheme.surface,
-                  icon: Icons.block,
-                  label: 'No colour',
-                  selected: _color == null,
-                  onTap: () => setState(() => _color = null),
-                ),
-                for (final c in Look.of(context).nodeColors)
-                  ColorDot(
-                    color: c,
-                    label: colorToHex(c),
-                    selected: _color == colorToHex(c),
-                    onTap: () => setState(() => _color = colorToHex(c)),
-                  ),
-              ],
-            ),
-            const SizedBox(height: Metrics.gutter),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (final t in _tags)
-                  InputChip(
-                    label: Text(t),
-                    onDeleted: () => setState(() => _tags.remove(t)),
-                  ),
-                SizedBox(
-                  width: 140,
-                  child: TextField(
-                    controller: _tag,
-                    decoration: const InputDecoration(
-                      hintText: 'Add tag',
-                      isDense: true,
-                    ),
-                    onSubmitted: (_) => _addTag(),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: Metrics.gutter * 1.5),
-            FilledButton(
-              onPressed: _title.text.trim().isEmpty ? null : _save,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-                backgroundColor: scheme.primary,
-              ),
-              child: const Text('Save'),
-            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          TextField(
+            controller: _notes,
+            minLines: 3,
+            maxLines: 8,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(hintText: 'Notes'),
+          ),
+          if (widget.voiceNotes case final voice?) ...[
+            const SizedBox(height: Metrics.gap),
+            voice,
           ],
-        ),
+          const SizedBox(height: Metrics.gutter),
+          if (!eliminated && widget.node.type == NodeType.task)
+            SegmentedButton<NodeStatus>(
+              showSelectedIcon: false,
+              segments: [
+                for (final s in [
+                  NodeStatus.pending,
+                  NodeStatus.done,
+                  NodeStatus.notYet,
+                ])
+                  ButtonSegment(
+                    value: s,
+                    label: Text(NodeStyle.statusLabel(s)),
+                  ),
+              ],
+              selected: {_status},
+              onSelectionChanged: (v) => setState(() => _status = v.first),
+            ),
+          const SizedBox(height: Metrics.gutter),
+          WhenEditor(
+            value: _when,
+            defaultLeadMinutes: widget.defaultLeadMinutes,
+            onChanged: (w) => setState(() => _when = w),
+          ),
+          const SizedBox(height: Metrics.gutter),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ColorDot(
+                color: tones.card,
+                icon: Icons.block,
+                label: 'No colour',
+                selected: _color == null,
+                onTap: () => setState(() => _color = null),
+              ),
+              for (final c in Look.of(context).nodeColors)
+                ColorDot(
+                  color: c,
+                  label: colorToHex(c),
+                  selected: _color == colorToHex(c),
+                  onTap: () => setState(() => _color = colorToHex(c)),
+                ),
+            ],
+          ),
+          const SizedBox(height: Metrics.gutter),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final t in _tags)
+                InputChip(
+                  label: Text(t),
+                  onDeleted: () => setState(() => _tags.remove(t)),
+                ),
+              SizedBox(
+                width: 140,
+                child: TextField(
+                  controller: _tag,
+                  decoration: const InputDecoration(
+                    hintText: 'Add tag',
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _addTag(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Metrics.gutter * 1.5),
+          FilledButton(
+            onPressed: _title.text.trim().isEmpty ? null : _save,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+            ),
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
