@@ -7,8 +7,6 @@ import '../state/providers.dart';
 import 'look_settings.dart';
 import 'theme.dart';
 
-/// Settings that already do something. The rest of the brief's settings
-/// list joins as the features they control are built.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 

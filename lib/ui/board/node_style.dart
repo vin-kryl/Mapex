@@ -14,11 +14,6 @@ abstract final class NodeStyle {
     return v == null ? null : Color(0xFF000000 | v);
   }
 
-  static String toHex(Color c) {
-    final rgb = c.toARGB32() & 0xFFFFFF;
-    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
-  }
-
   static IconData statusIcon(Node n) => switch (n.status) {
     NodeStatus.done =>
       n.type == NodeType.decision ? Icons.call_split : Icons.check_circle,

@@ -12,7 +12,7 @@ enum RepeatKind {
       readEnum(RepeatKind.values, value, path);
 }
 
-/// A node's reminder. Fired by local notifications (phase 3).
+/// A node's reminder, fired as a local notification.
 class Reminder {
   const Reminder({
     this.leadMinutes,
