@@ -2,16 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
-/// Makes double-clicking a board file open Mapex on Windows and Linux. The
+/// Makes double-clicking a board file open Sortle on Windows and Linux. The
 /// apps there are unzipped rather than installed, so nothing else would
 /// tell the system about the file type. Only the current user's settings
 /// are touched, and it is redone whenever the app has moved.
 ///
 /// macOS and Android declare the file type in the app itself.
 abstract final class FileAssociation {
-  static const extension = 'mapex';
-  static const _progId = 'Mapex.Board';
-  static const _mime = 'application/x-mapex';
+  static const extension = 'sortle';
+  static const _progId = 'Sortle.Board';
+  static const _mime = 'application/x-sortle';
 
   static Future<void> ensure() async {
     try {
@@ -45,7 +45,7 @@ abstract final class FileAssociation {
     }
 
     await set('$classes\\.$extension', _progId);
-    await set('$classes\\$_progId', 'Mapex board');
+    await set('$classes\\$_progId', 'Sortle board');
     await set('$classes\\$_progId\\DefaultIcon', '"$exe",0');
     await set('$classes\\$_progId\\shell\\open\\command', command);
   }
@@ -54,11 +54,11 @@ abstract final class FileAssociation {
     final home = Platform.environment['HOME'];
     if (home == null) return;
     final data = Platform.environment['XDG_DATA_HOME'] ?? '$home/.local/share';
-    final desktop = File('$data/applications/com.apeaxis.mapex.desktop');
+    final desktop = File('$data/applications/com.apeaxis.sortle.desktop');
     final entry = linuxDesktopEntry(exe);
     if (await desktop.exists() && await desktop.readAsString() == entry) return;
 
-    final mime = File('$data/mime/packages/com.apeaxis.mapex.xml');
+    final mime = File('$data/mime/packages/com.apeaxis.sortle.xml');
     await mime.parent.create(recursive: true);
     await mime.writeAsString(linuxMimeXml);
     await desktop.parent.create(recursive: true);
@@ -67,7 +67,7 @@ abstract final class FileAssociation {
     for (final (cmd, args) in [
       ('update-mime-database', ['$data/mime']),
       ('update-desktop-database', ['$data/applications']),
-      ('xdg-mime', ['default', 'com.apeaxis.mapex.desktop', _mime]),
+      ('xdg-mime', ['default', 'com.apeaxis.sortle.desktop', _mime]),
     ]) {
       try {
         await Process.run(cmd, args);
@@ -83,7 +83,7 @@ abstract final class FileAssociation {
     final icon = '${File(exe).parent.path}/data/flutter_assets/assets/icon.png';
     return '[Desktop Entry]\n'
         'Type=Application\n'
-        'Name=Mapex\n'
+        'Name=Sortle\n'
         'Comment=Untangle your thoughts into a plan\n'
         'Exec=$quoted %f\n'
         'Icon=$icon\n'
@@ -96,7 +96,7 @@ abstract final class FileAssociation {
       '<?xml version="1.0" encoding="UTF-8"?>\n'
       '<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n'
       '  <mime-type type="$_mime">\n'
-      '    <comment>Mapex board</comment>\n'
+      '    <comment>Sortle board</comment>\n'
       '    <glob pattern="*.$extension"/>\n'
       '  </mime-type>\n'
       '</mime-info>\n';

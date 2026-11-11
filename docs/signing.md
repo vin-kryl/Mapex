@@ -1,6 +1,6 @@
 # Android signing key
 
-Mapex uses **Play App Signing**. Google keeps the key that signs the app
+Sortle uses **Play App Signing**. Google keeps the key that signs the app
 people download. We keep only an **upload key**, which proves an upload came
 from us. If the upload key is ever lost, Google can reset it from the Play
 Console, so a lost key does not mean a lost app.
@@ -12,8 +12,8 @@ The key file and its password are never committed. `android/key.properties`,
 
 | What | Where |
 | --- | --- |
-| Upload key file | `~/Keys/mapex-upload.jks` on Vineet's Mac |
-| Backup of the key file | Attached to the "Mapex upload key" entry in Vineet's password manager |
+| Upload key file | `~/Keys/sortle-upload.jks` on Vineet's Mac |
+| Backup of the key file | Attached to the "Sortle upload key" entry in Vineet's password manager |
 | Key password | Same password manager entry |
 | Build settings that point at the key | `android/key.properties` in the project folder on the Mac (not in git) |
 
@@ -31,7 +31,7 @@ The key file and its password are never committed. `android/key.properties`,
    Studio:
 
    ```sh
-   "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkeypair -v -keystore ~/Keys/mapex-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkeypair -v -keystore ~/Keys/sortle-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
    ```
 
 4. It asks for a **keystore password**. Make up a strong one, type it and
@@ -41,8 +41,8 @@ The key file and its password are never committed. `android/key.properties`,
    Enter to skip each one. When it asks `Is CN=... correct?`, type `yes` and
    press Enter.
 6. Open your password manager and make a new entry called
-   **Mapex upload key**. Put the password in it.
-7. In the same entry, attach the file `mapex-upload.jks`. To find it, in
+   **Sortle upload key**. Put the password in it.
+7. In the same entry, attach the file `sortle-upload.jks`. To find it, in
    Finder press Cmd + Shift + G, type `~/Keys` and press Enter.
 
 ## Let GitHub sign the APKs (once)
@@ -56,10 +56,10 @@ back.
    clipboard as text:
 
    ```sh
-   base64 -i ~/Keys/mapex-upload.jks | pbcopy
+   base64 -i ~/Keys/sortle-upload.jks | pbcopy
    ```
 
-2. Open https://github.com/vin-kryl/Mapex/settings/secrets/actions/new
+2. Open https://github.com/vin-kryl/Sortle/settings/secrets/actions/new
 3. Name: `ANDROID_KEYSTORE`. Secret: press Cmd + V. Click **Add secret**.
 4. Open the same link again. Name: `ANDROID_KEYSTORE_PASSWORD`. Secret: the
    password from the password manager. Click **Add secret**.
@@ -78,7 +78,7 @@ password, which is how `keytool` makes it.
    storePassword=PASSWORD
    keyPassword=PASSWORD
    keyAlias=upload
-   storeFile=/Users/YOURNAME/Keys/mapex-upload.jks
+   storeFile=/Users/YOURNAME/Keys/sortle-upload.jks
    ```
 
 3. Build with `flutter build appbundle --release`. The signed file is at
@@ -91,6 +91,6 @@ still check that the app builds. Those builds cannot be uploaded to Play.
 
 ## If the key is lost
 
-Restore `mapex-upload.jks` from the password manager. If the backup is gone
+Restore `sortle-upload.jks` from the password manager. If the backup is gone
 too, ask Google for an upload key reset in the Play Console under
 **Setup → App signing**.

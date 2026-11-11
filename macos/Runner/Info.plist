@@ -32,14 +32,14 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>Mapex board</string>
+			<string>Sortle board</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.apeaxis.mapex.board</string>
+				<string>com.apeaxis.sortle.board</string>
 			</array>
 		</dict>
 	</array>
@@ -47,9 +47,9 @@
 	<array>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>com.apeaxis.mapex.board</string>
+			<string>com.apeaxis.sortle.board</string>
 			<key>UTTypeDescription</key>
-			<string>Mapex board</string>
+			<string>Sortle board</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
@@ -59,12 +59,12 @@
 			<dict>
 				<key>public.filename-extension</key>
 				<array>
-					<string>mapex</string>
+					<string>sortle</string>
 				</array>
 			</dict>
 		</dict>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Mapex records voice notes on your nodes.</string>
+	<string>Sortle records voice notes on your nodes.</string>
 </dict>
 </plist>

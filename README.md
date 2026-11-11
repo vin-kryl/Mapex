@@ -1,4 +1,4 @@
-# Mapex
+# Sortle
 
 An offline mind-mapping and decision tracker. Build your thoughts as a tree,
 branch by branch, then track which paths you took and what comes next.
@@ -12,27 +12,29 @@ branch by branch, then track which paths you took and what comes next.
 Early development. Boards (create, rename, duplicate, trash, restore, revert
 to an earlier version), the tree canvas and outline view, task and decision
 nodes, undo/redo, reminders with repeats, the "Which one did you do?" decision
-prompt, the Today screen, voice notes and .mapex / JSON export and import
+prompt, the Today screen, voice notes and .sortle / JSON export and import
 work on all four platforms. Settings polish is next.
 
 ## Download
 
-Get the latest build from [Releases](https://github.com/vin-kryl/Mapex/releases).
+Get the latest build from [Releases](https://github.com/vin-kryl/Sortle/releases).
 The apps are not signed with paid certificates, so the system asks once
 before opening them.
 
 - **Android**: download the `.apk` on your phone and open it. Allow
   installing from your browser or files app when asked. Android 10 or newer.
-- **macOS**: unzip and move Mapex to Applications. The first time, right-click
-  Mapex and choose **Open**, then **Open** again. macOS 13 or newer.
-- **Windows**: unzip anywhere and run `mapex.exe`. If SmartScreen says
+- **macOS**: open the `.dmg` and drag Sortle onto Applications. The first
+  time, right-click Sortle and choose **Open**. On macOS 15 or newer, if it
+  says it can't be checked, open **System Settings**, then **Privacy &
+  Security**, scroll down and click **Open Anyway**. macOS 13 or newer.
+- **Windows**: unzip anywhere and run `sortle.exe`. If SmartScreen says
   "Windows protected your PC", click **More info**, then **Run anyway**.
-- **Linux**: unpack the `.tar.gz` and run `./mapex` (or `./mapex board.mapex` to open a file). Voice notes need
+- **Linux**: unpack the `.tar.gz` and run `./sortle` (or `./sortle board.sortle` to open a file). Voice notes need
   `pulseaudio-utils` and `ffmpeg` to record and GStreamer to play (on Ubuntu:
   `sudo apt install pulseaudio-utils ffmpeg gstreamer1.0-plugins-good gstreamer1.0-libav`).
-  Reminders on Linux pop up only while Mapex is open.
+  Reminders on Linux pop up only while Sortle is open.
 
-On Android, macOS and Windows reminders fire even when Mapex is closed.
+On Android, macOS and Windows reminders fire even when Sortle is closed.
 
 ## Building
 

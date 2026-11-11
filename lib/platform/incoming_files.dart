@@ -33,11 +33,11 @@ final incomingFilesProvider =
 
 /// Connects the platform side to [IncomingFiles].
 ///
-/// Android and macOS hand files over on the `mapex/files` channel: the app
+/// Android and macOS hand files over on the `sortle/files` channel: the app
 /// asks for any that arrived before it was ready, then is told about new
 /// ones. Windows and Linux pass the file path as a command-line argument.
 abstract final class IncomingFileSource {
-  static const channel = MethodChannel('mapex/files');
+  static const channel = MethodChannel('sortle/files');
 
   /// Largest file accepted, the same cap as import itself.
   static const _maxBytes = 1024 * 1024 * 1024;
@@ -80,7 +80,7 @@ abstract final class IncomingFileSource {
 
   static Future<IncomingFile?> _readPath(String path) async {
     final lower = path.toLowerCase();
-    if (!lower.endsWith('.mapex') && !lower.endsWith('.json')) return null;
+    if (!const ['.sortle', '.mapex', '.json'].any(lower.endsWith)) return null;
     final file = File(path);
     try {
       if (!await file.exists() || await file.length() > _maxBytes) return null;

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/settings/app_settings.dart';
-import 'package:mapex/ui/board/tree_layout.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/settings/app_settings.dart';
+import 'package:sortle/ui/board/tree_layout.dart';
 
 final t0 = DateTime.utc(2026);
 

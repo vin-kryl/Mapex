@@ -4,22 +4,22 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/model/tree_ops.dart';
-import 'package:mapex/settings/app_settings.dart';
-import 'package:mapex/state/board_editor.dart';
-import 'package:mapex/state/providers.dart';
-import 'package:mapex/storage/board_repository.dart';
-import 'package:mapex/ui/board/board_screen.dart';
-import 'package:mapex/ui/board/node_card.dart';
-import 'package:mapex/ui/theme.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/model/tree_ops.dart';
+import 'package:sortle/settings/app_settings.dart';
+import 'package:sortle/state/board_editor.dart';
+import 'package:sortle/state/providers.dart';
+import 'package:sortle/storage/board_repository.dart';
+import 'package:sortle/ui/board/board_screen.dart';
+import 'package:sortle/ui/board/node_card.dart';
+import 'package:sortle/ui/theme.dart';
 
 void main() {
   late Directory tmp;
   late String boardId;
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('mapex_board_ui_');
+    tmp = await Directory.systemTemp.createTemp('sortle_board_ui_');
   });
 
   // Synchronous on purpose: async file calls never finish inside a widget

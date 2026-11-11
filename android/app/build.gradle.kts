@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.apeaxis.mapex"
+    namespace = "com.apeaxis.sortle"
     // flutter_local_notifications needs 37 to compile against.
     compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
@@ -29,7 +29,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.apeaxis.mapex"
+        applicationId = "com.apeaxis.sortle"
         // Android 10 (API 29) and up.
         minSdk = 29
         targetSdk = flutter.targetSdkVersion

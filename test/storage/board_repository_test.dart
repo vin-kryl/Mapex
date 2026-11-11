@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/storage/board_repository.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/storage/board_repository.dart';
 
 void main() {
   late Directory tmp;
@@ -12,7 +12,7 @@ void main() {
   var cap = 200;
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('mapex_test_');
+    tmp = await Directory.systemTemp.createTemp('sortle_test_');
     now = DateTime.utc(2026, 11, 10, 9);
     cap = 200;
     repo = BoardRepository(

@@ -163,7 +163,7 @@ class SettingsScreen extends ConsumerWidget {
               _Section(
                 title: 'Export with voice notes',
                 subtitle:
-                    'On: export suggests a .mapex file with the audio. '
+                    'On: export suggests a .sortle file with the audio. '
                     'Off: plain JSON first.',
                 child: Switch(
                   value: s.exportWithAudio,

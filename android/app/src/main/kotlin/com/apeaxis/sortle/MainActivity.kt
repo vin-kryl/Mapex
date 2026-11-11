@@ -1,4 +1,4 @@
-package com.apeaxis.mapex
+package com.apeaxis.sortle
 
 import android.content.Intent
 import android.net.Uri
@@ -9,7 +9,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 /// Hands board files opened from Files or shared from another app to the
-/// Dart side on the "mapex/files" channel.
+/// Dart side on the "sortle/files" channel.
 class MainActivity : FlutterActivity() {
     private var channel: MethodChannel? = null
     private val queued = mutableListOf<Map<String, Any>>()
@@ -17,7 +17,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "mapex/files").apply {
+        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sortle/files").apply {
             setMethodCallHandler { call, result ->
                 if (call.method == "takeQueued") {
                     dartReady = true
@@ -88,7 +88,7 @@ class MainActivity : FlutterActivity() {
         contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
             if (c.moveToFirst() && !c.isNull(0)) return c.getString(0)
         }
-        return uri.lastPathSegment ?: "board.mapex"
+        return uri.lastPathSegment ?: "board.sortle"
     }
 
     companion object {

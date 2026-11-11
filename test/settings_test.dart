@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/settings/app_settings.dart';
-import 'package:mapex/settings/settings_store.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/settings/app_settings.dart';
+import 'package:sortle/settings/settings_store.dart';
 
 void main() {
   test('defaults: history cap 200', () {
@@ -42,7 +42,7 @@ void main() {
   });
 
   test('store saves and loads, and survives a broken file', () async {
-    final tmp = await Directory.systemTemp.createTemp('mapex_settings_');
+    final tmp = await Directory.systemTemp.createTemp('sortle_settings_');
     addTearDown(() => tmp.delete(recursive: true));
     final store = SettingsStore(tmp);
     expect((await store.load()).historyCap, 200);

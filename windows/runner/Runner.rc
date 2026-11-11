@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Vineet Khankriyal" "\0"
-            VALUE "FileDescription", "Mapex" "\0"
+            VALUE "FileDescription", "Sortle" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "mapex" "\0"
+            VALUE "InternalName", "sortle" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 Vineet Khankriyal. MIT licence." "\0"
-            VALUE "OriginalFilename", "mapex.exe" "\0"
-            VALUE "ProductName", "Mapex" "\0"
+            VALUE "OriginalFilename", "sortle.exe" "\0"
+            VALUE "ProductName", "Sortle" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

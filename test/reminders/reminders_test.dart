@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/board.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/model/reminder.dart';
-import 'package:mapex/reminders/alert_platform.dart';
-import 'package:mapex/reminders/plan.dart';
-import 'package:mapex/reminders/scheduler.dart';
-import 'package:mapex/reminders/timing.dart';
-import 'package:mapex/reminders/today.dart';
-import 'package:mapex/settings/app_settings.dart';
+import 'package:sortle/model/board.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/model/reminder.dart';
+import 'package:sortle/reminders/alert_platform.dart';
+import 'package:sortle/reminders/plan.dart';
+import 'package:sortle/reminders/scheduler.dart';
+import 'package:sortle/reminders/timing.dart';
+import 'package:sortle/reminders/today.dart';
+import 'package:sortle/settings/app_settings.dart';
 
 final t0 = DateTime.utc(2026);
 

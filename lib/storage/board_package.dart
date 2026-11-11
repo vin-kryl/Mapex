@@ -10,8 +10,8 @@ import '../model/schema.dart';
 
 /// How a board leaves the app.
 enum ExportFormat {
-  /// `.mapex`: a zip with `board.json` and the voice notes in `audio/`.
-  mapex('mapex'),
+  /// `.sortle`: a zip with `board.json` and the voice notes in `audio/`.
+  sortle('sortle'),
 
   /// `.json`: the board on its own, without voice notes.
   json('json');
@@ -51,7 +51,7 @@ abstract final class BoardPackager {
       case ExportFormat.json:
         final plain = board.copyWith(root: _withoutVoice(board.root));
         return Uint8List.fromList(utf8.encode(BoardSchema.encode(plain)));
-      case ExportFormat.mapex:
+      case ExportFormat.sortle:
         final audio = <String, Uint8List>{};
         for (final path in _audioPaths(board.root)) {
           final bytes = await readAudio(path);
@@ -69,7 +69,7 @@ abstract final class BoardPackager {
     }
   }
 
-  /// Reads a `.mapex` zip or a plain board JSON file. Throws
+  /// Reads a `.sortle` zip or a plain board JSON file. Throws
   /// [SchemaException] with a readable reason when the file is not a board.
   static BoardPackage read(Uint8List bytes) {
     if (bytes.length > maxImportBytes) {
@@ -80,7 +80,7 @@ abstract final class BoardPackager {
     try {
       text = utf8.decode(bytes);
     } on FormatException {
-      throw SchemaException('this is not a Mapex file');
+      throw SchemaException('this is not a Sortle file');
     }
     final board = BoardSchema.decode(text);
     // A plain JSON file carries no audio, so its voice notes would point at
@@ -93,7 +93,7 @@ abstract final class BoardPackager {
     try {
       archive = ZipDecoder().decodeBytes(bytes);
     } on Object {
-      throw SchemaException('the .mapex file is damaged');
+      throw SchemaException('the .sortle file is damaged');
     }
     var total = 0;
     String? boardText;
@@ -116,7 +116,7 @@ abstract final class BoardPackager {
       // Anything else is ignored rather than written to disk.
     }
     if (boardText == null) {
-      throw SchemaException('the .mapex file has no board.json');
+      throw SchemaException('the .sortle file has no board.json');
     }
     final board = BoardSchema.decode(boardText);
     final wanted = _audioPaths(board.root).toSet();

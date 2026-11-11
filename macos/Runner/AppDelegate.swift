@@ -16,7 +16,7 @@ class AppDelegate: FlutterAppDelegate {
     return true
   }
 
-  /// Double-clicking a .mapex file in Finder, or dropping it on the Dock icon.
+  /// Double-clicking a .sortle file in Finder, or dropping it on the Dock icon.
   override func application(_ application: NSApplication, open urls: [URL]) {
     for url in urls {
       guard let file = AppDelegate.read(url) else { continue }
@@ -28,7 +28,7 @@ class AppDelegate: FlutterAppDelegate {
     }
   }
 
-  /// The "mapex/files" channel, set up by the main window.
+  /// The "sortle/files" channel, set up by the main window.
   func attachFilesChannel(_ channel: FlutterMethodChannel) {
     filesChannel = channel
     channel.setMethodCallHandler { [weak self] call, result in
