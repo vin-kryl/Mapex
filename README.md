@@ -23,10 +23,11 @@ before opening them.
 
 - **Android**: download the `.apk` on your phone and open it. Allow
   installing from your browser or files app when asked. Android 10 or newer.
-- **macOS**: open the `.dmg` and drag Sortle onto Applications. The first
-  time, right-click Sortle and choose **Open**. On macOS 15 or newer, if it
-  says it can't be checked, open **System Settings**, then **Privacy &
-  Security**, scroll down and click **Open Anyway**. macOS 13 or newer.
+- **macOS**: open the `.dmg` and drag Sortle onto Applications, then open
+  it. The first time, macOS says it could not verify Sortle: click **Done**,
+  open **System Settings**, go to **Privacy & Security**, scroll down and
+  click **Open Anyway** next to the Sortle message, then confirm. After that
+  Sortle opens normally. macOS 13 or newer.
 - **Windows**: unzip anywhere and run `sortle.exe`. If SmartScreen says
   "Windows protected your PC", click **More info**, then **Run anyway**.
 - **Linux**: unpack the `.tar.gz` and run `./sortle` (or `./sortle board.sortle` to open a file). Voice notes need
