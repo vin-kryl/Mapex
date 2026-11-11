@@ -36,7 +36,7 @@ class TreeLayout {
   final Size size;
 
   /// Lays out [root] automatically. Children of collapsed nodes are hidden.
-  /// The user never positions nodes.
+  /// Ignores where the user placed nodes; see [CanvasLayout] for that.
   static TreeLayout compute(
     Node root,
     LayoutDirection direction,
@@ -107,5 +107,82 @@ class TreeLayout {
         ? Size(across + spec.padding * 2, down + spec.padding * 2)
         : Size(down + spec.padding * 2, across + spec.padding * 2);
     return TreeLayout(rects: rects, edges: edges, size: size);
+  }
+}
+
+/// Where each node shows on the free canvas.
+///
+/// A node the user placed sits where they put it. A node that was never
+/// placed keeps the spot the automatic layout gives it relative to its
+/// parent, so new steps appear next to their parent wherever it was moved.
+class CanvasLayout {
+  const CanvasLayout({required this.rects, required this.edges});
+
+  /// Where each visible node sits, in board coordinates (may be negative).
+  final Map<String, Rect> rects;
+
+  /// Parent and child id of each visible connection.
+  final List<(String, String)> edges;
+
+  /// The smallest box holding every node.
+  Rect get bounds => rects.values.reduce((a, b) => a.expandToInclude(b));
+
+  static CanvasLayout compute(
+    Node root,
+    LayoutDirection direction,
+    LayoutSpec spec,
+  ) {
+    final auto = TreeLayout.compute(
+      root,
+      direction,
+      LayoutSpec(
+        nodeWidth: spec.nodeWidth,
+        nodeHeight: spec.nodeHeight,
+        siblingGap: spec.siblingGap,
+        levelGap: spec.levelGap,
+        padding: 0,
+      ),
+    );
+    final rects = <String, Rect>{};
+    void place(Node n, Rect? parentAuto, Rect? parentShown) {
+      final own = auto.rects[n.id];
+      if (own == null) return;
+      final p = n.position;
+      final Rect shown;
+      if (p != null) {
+        shown = Rect.fromLTWH(p.x, p.y, spec.nodeWidth, spec.nodeHeight);
+      } else if (parentAuto != null && parentShown != null) {
+        shown = own.shift(parentShown.topLeft - parentAuto.topLeft);
+      } else {
+        shown = own;
+      }
+      rects[n.id] = shown;
+      if (n.collapsed) return;
+      for (final kid in n.children) {
+        place(kid, own, shown);
+      }
+    }
+
+    place(root, null, null);
+    return CanvasLayout(rects: rects, edges: auto.edges);
+  }
+
+  /// Only [id]'s branch, for focus mode.
+  CanvasLayout branch(Node node) {
+    final ids = <String>{};
+    void walk(Node n) {
+      if (!rects.containsKey(n.id)) return;
+      ids.add(n.id);
+      if (!n.collapsed) n.children.forEach(walk);
+    }
+
+    walk(node);
+    return CanvasLayout(
+      rects: {for (final id in ids) id: rects[id]!},
+      edges: [
+        for (final e in edges)
+          if (ids.contains(e.$1) && ids.contains(e.$2)) e,
+      ],
+    );
   }
 }
