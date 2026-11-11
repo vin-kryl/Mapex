@@ -1,9 +1,11 @@
 # Android signing key
 
-Sortle uses **Play App Signing**. Google keeps the key that signs the app
-people download. We keep only an **upload key**, which proves an upload came
-from us. If the upload key is ever lost, Google can reset it from the Play
-Console, so a lost key does not mean a lost app.
+Sortle is shared as an APK on GitHub Releases, not through Google Play. The
+Release workflow signs every APK with one key, `sortle-upload.jks`. Android
+only installs an update over the old app if both were signed with the same
+key, so **this key cannot be replaced**. If it is lost, everyone has to
+uninstall Sortle (losing the boards on their phone unless they exported them)
+and install it again. Keep the backup safe.
 
 The key file and its password are never committed. `android/key.properties`,
 `*.jks` and `*.keystore` are in `.gitignore`.
@@ -67,30 +69,27 @@ back.
 The key alias is `upload`, and the key password is the same as the keystore
 password, which is how `keytool` makes it.
 
-## Use the key for a Play build (at release time)
+## Building a signed APK on the Mac (optional)
 
-1. In the project folder on the Mac, open the `android` folder.
-2. Make a new text file there named exactly `key.properties` with these four
-   lines. Replace `PASSWORD` with the password from step 4 (twice) and
-   `YOURNAME` with your Mac user name:
+The Release workflow does this for you. To do it by hand, make
+`android/key.properties` (never commit it) with these four lines, replacing
+`PASSWORD` and `YOURNAME`:
 
-   ```properties
-   storePassword=PASSWORD
-   keyPassword=PASSWORD
-   keyAlias=upload
-   storeFile=/Users/YOURNAME/Keys/sortle-upload.jks
-   ```
+```properties
+storePassword=PASSWORD
+keyPassword=PASSWORD
+keyAlias=upload
+storeFile=/Users/YOURNAME/Keys/sortle-upload.jks
+```
 
-3. Build with `flutter build appbundle --release`. The signed file is at
-   `build/app/outputs/bundle/release/app-release.aab`.
-4. In the Play Console, create the app and upload that `.aab`. Leave
-   **Play App Signing** switched on (it is on by default).
+Then run `flutter build apk --release`. Without `key.properties`, builds use
+the debug key, which is fine for checking that the app builds but not for
+sharing.
 
-Without `key.properties`, release builds fall back to the debug key so CI can
-still check that the app builds. Those builds cannot be uploaded to Play.
+If Sortle goes on Google Play later, turn on **Play App Signing** there and
+upload with this same key.
 
 ## If the key is lost
 
-Restore `sortle-upload.jks` from the password manager. If the backup is gone
-too, ask Google for an upload key reset in the Play Console under
-**Setup → App signing**.
+Restore `sortle-upload.jks` from the password manager. There is no other way
+to get it back.
