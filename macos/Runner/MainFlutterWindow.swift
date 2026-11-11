@@ -1,13 +1,17 @@
 import Cocoa
 import FlutterMacOS
+import macos_window_utils
 
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
-    let flutterViewController = FlutterViewController()
     let windowFrame = self.frame
-    self.contentViewController = flutterViewController
+    let controller = MacOSWindowUtilsViewController()
+    self.contentViewController = controller
     self.setFrame(windowFrame, display: true)
 
+    MainFlutterWindowManipulator.start(mainFlutterWindow: self)
+
+    let flutterViewController = controller.flutterViewController
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     let files = FlutterMethodChannel(

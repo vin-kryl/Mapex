@@ -15,6 +15,10 @@ bool get isDesktop =>
     defaultTargetPlatform == TargetPlatform.windows ||
     defaultTargetPlatform == TargetPlatform.linux;
 
+/// True once the Mac window has been made see-through, so the sidebar
+/// shows the frosted desktop behind it. Set at startup.
+bool isMacFrosted = false;
+
 /// Colour tokens. Quiet neutrals with a single accent.
 abstract final class Palette {
   static const appleBlue = Color(0xFF007AFF);
