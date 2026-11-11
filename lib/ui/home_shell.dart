@@ -7,10 +7,16 @@ import '../state/providers.dart';
 import 'board_list_screen.dart';
 import 'export_import.dart';
 import 'prompt_sheet.dart';
+import 'shell/desktop_shell.dart';
+import 'theme.dart';
 import 'today_screen.dart';
 
-/// Today and Boards, with the app opening on Today. Also shows the prompt
-/// for a tapped notification, and imports board files opened from outside.
+/// Wide windows below this use the phone layout.
+const desktopBreakpoint = 900.0;
+
+/// The home screen: a sidebar window on desktops and wide screens, and
+/// Boards and Today tabs on phones. Also shows the prompt for a tapped
+/// notification, and imports board files opened from outside.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -21,6 +27,7 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell>
     with WidgetsBindingObserver {
   int _tab = 0;
+  final _desktop = DesktopShellController();
 
   @override
   void initState() {
@@ -37,6 +44,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _desktop.dispose();
     super.dispose();
   }
 
@@ -52,7 +60,6 @@ class _HomeShellState extends ConsumerState<HomeShell>
 
   Future<void> _openPrompt(AlertPayload p) async {
     ref.read(pendingPromptProvider.notifier).clear();
-    setState(() => _tab = 0);
     await showPromptSheet(context, ref, boardId: p.boardId, nodeId: p.nodeId);
     ref.invalidate(allBoardsProvider);
   }
@@ -67,7 +74,8 @@ class _HomeShellState extends ConsumerState<HomeShell>
       while (mounted) {
         final file = ref.read(incomingFilesProvider.notifier).take();
         if (file == null) break;
-        setState(() => _tab = 1);
+        setState(() => _tab = 0);
+        _desktop.show(Pane.boards);
         await importBytes(context, ref, file.bytes);
       }
     } finally {
@@ -83,27 +91,33 @@ class _HomeShellState extends ConsumerState<HomeShell>
     ref.listen(incomingFilesProvider, (_, next) {
       if (next.isNotEmpty) _importIncoming();
     });
+    final wide =
+        isDesktop || MediaQuery.sizeOf(context).width >= desktopBreakpoint;
+    if (wide) return DesktopShell(controller: _desktop);
     return Scaffold(
       body: IndexedStack(
         index: _tab,
-        children: const [TodayScreen(), BoardListScreen()],
+        children: [
+          BoardListScreen(onSeeToday: () => setState(() => _tab = 1)),
+          const TodayScreen(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) {
-          if (i == 0) ref.invalidate(allBoardsProvider);
+          if (i == 1) ref.invalidate(allBoardsProvider);
           setState(() => _tab = i);
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today),
-            label: 'Today',
+            icon: Icon(Icons.grid_view_outlined),
+            selectedIcon: Icon(Icons.grid_view_rounded),
+            label: 'Boards',
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_tree_outlined),
-            selectedIcon: Icon(Icons.account_tree),
-            label: 'Boards',
+            icon: Icon(Icons.wb_sunny_outlined),
+            selectedIcon: Icon(Icons.wb_sunny),
+            label: 'Today',
           ),
         ],
       ),
