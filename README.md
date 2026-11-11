@@ -12,8 +12,8 @@ branch by branch, then track which paths you took and what comes next.
 Early development. Boards (create, rename, duplicate, trash, restore, revert
 to an earlier version), the tree canvas and outline view, task and decision
 nodes, undo/redo, reminders with repeats, the "Which one did you do?" decision
-prompt, the Today screen, voice notes and .sortle / JSON export and import
-work on all four platforms. Settings polish is next.
+prompt, the Today screen, voice notes, .sortle / JSON export and import, and
+custom colours and corner roundness work on all four platforms.
 
 ## Download
 

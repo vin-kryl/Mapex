@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../model/node.dart';
+import '../color_picker.dart';
 import '../theme.dart';
 import 'node_style.dart';
 import 'when_editor.dart';
@@ -162,16 +163,19 @@ class _EditSheetState extends State<_EditSheet> {
               spacing: 10,
               runSpacing: 10,
               children: [
-                _Swatch(
-                  color: null,
+                ColorDot(
+                  color: scheme.surface,
+                  icon: Icons.block,
+                  label: 'No colour',
                   selected: _color == null,
                   onTap: () => setState(() => _color = null),
                 ),
                 for (final c in Look.of(context).nodeColors)
-                  _Swatch(
+                  ColorDot(
                     color: c,
-                    selected: _color == NodeStyle.toHex(c),
-                    onTap: () => setState(() => _color = NodeStyle.toHex(c)),
+                    label: colorToHex(c),
+                    selected: _color == colorToHex(c),
+                    onTap: () => setState(() => _color = colorToHex(c)),
                   ),
               ],
             ),
@@ -209,47 +213,6 @@ class _EditSheetState extends State<_EditSheet> {
               child: const Text('Save'),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Swatch extends StatelessWidget {
-  const _Swatch({
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Color? color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: color == null ? 'No colour' : 'Colour',
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: color ?? scheme.surface,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: selected ? scheme.primary : scheme.outline,
-              width: selected ? 2.5 : 1,
-            ),
-          ),
-          child: color == null
-              ? Icon(Icons.block, size: 16, color: scheme.onSurfaceVariant)
-              : null,
         ),
       ),
     );

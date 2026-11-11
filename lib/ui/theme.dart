@@ -62,6 +62,11 @@ abstract final class Metrics {
 Color hexToColor(String hex) =>
     Color(0xFF000000 | int.parse(hex.substring(1), radix: 16));
 
+String colorToHex(Color c) {
+  final rgb = c.toARGB32() & 0xFFFFFF;
+  return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+}
+
 /// The colours and shape the user picked in Settings, available to every
 /// widget through the theme.
 class Look extends ThemeExtension<Look> {
