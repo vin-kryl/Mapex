@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/settings/app_settings.dart';
-import 'package:mapex/settings/settings_store.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/settings/app_settings.dart';
+import 'package:sortle/settings/settings_store.dart';
 
 void main() {
   test('defaults: history cap 200', () {
@@ -42,7 +42,7 @@ void main() {
   });
 
   test('store saves and loads, and survives a broken file', () async {
-    final tmp = await Directory.systemTemp.createTemp('mapex_settings_');
+    final tmp = await Directory.systemTemp.createTemp('sortle_settings_');
     addTearDown(() => tmp.delete(recursive: true));
     final store = SettingsStore(tmp);
     expect((await store.load()).historyCap, 200);
@@ -50,5 +50,25 @@ void main() {
     expect((await store.load()).historyCap, 7);
     File('${tmp.path}/settings.json').writeAsStringSync('{broken');
     expect((await store.load()).historyCap, 200);
+  });
+
+  test('look: colours are checked, radius clamped', () {
+    final s = AppSettings.fromJson({
+      'accentColor': '#2563eb',
+      'nodeColors': ['#ABCDEF', 'red', 12, '#123456'],
+      'doneColor': 'green',
+      'cornerRadius': 99,
+    });
+    expect(s.accentColor, '#2563EB');
+    expect(s.nodeColors, ['#ABCDEF', '#123456']);
+    expect(s.doneColor, AppSettings.defaults.doneColor);
+    expect(s.cornerRadius, AppSettings.cornerRadiusRange.max);
+    expect(
+      AppSettings.fromJson({'nodeColors': []}).nodeColors,
+      AppSettings.defaults.nodeColors,
+    );
+    final back = AppSettings.fromJson(s.toJson());
+    expect(back.nodeColors, s.nodeColors);
+    expect(s.copyWith(accentColor: () => null).accentColor, isNull);
   });
 }

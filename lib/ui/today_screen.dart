@@ -121,7 +121,7 @@ class _ItemTile extends ConsumerWidget {
         child: ListTile(
           leading: Icon(
             NodeStyle.statusIcon(n),
-            color: NodeStyle.statusColor(n, scheme),
+            color: NodeStyle.statusColor(n, context),
           ),
           title: Text(n.title, maxLines: 2, overflow: TextOverflow.ellipsis),
           subtitle: Text(

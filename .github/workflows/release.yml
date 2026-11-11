@@ -1,6 +1,6 @@
 name: Release
 
-# Builds Mapex for Android, macOS, Windows and Linux and attaches the files
+# Builds Sortle for Android, macOS, Windows and Linux and attaches the files
 # to a GitHub Release. Start it from the Actions tab (Release, Run workflow,
 # type the version), or push a tag like v0.2.0.
 on:
@@ -77,14 +77,14 @@ jobs:
           flutter build apk --release
           --build-name=${{ needs.version.outputs.number }}
           --build-number=${{ github.run_number }}
-      - run: mv build/app/outputs/flutter-apk/app-release.apk "Mapex-${{ needs.version.outputs.number }}-android.apk"
+      - run: mv build/app/outputs/flutter-apk/app-release.apk "Sortle-${{ needs.version.outputs.number }}-android.apk"
       - name: Remove signing key
         if: always()
         run: rm -f "$RUNNER_TEMP/upload.jks" android/key.properties
       - uses: actions/upload-artifact@v5
         with:
           name: android
-          path: Mapex-*-android.apk
+          path: Sortle-*-android.apk
 
   macos:
     name: macOS app
@@ -102,11 +102,18 @@ jobs:
           flutter build macos --release
           --build-name=${{ needs.version.outputs.number }}
           --build-number=${{ github.run_number }}
-      - run: ditto -c -k --keepParent build/macos/Build/Products/Release/Mapex.app "Mapex-${{ needs.version.outputs.number }}-macos.zip"
+      # A disk image with the app next to an Applications shortcut, so
+      # installing is a drag.
+      - name: Disk image
+        run: |
+          mkdir dmg
+          cp -R build/macos/Build/Products/Release/Sortle.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname Sortle -srcfolder dmg -ov -format UDZO "Sortle-${{ needs.version.outputs.number }}-macos.dmg"
       - uses: actions/upload-artifact@v5
         with:
           name: macos
-          path: Mapex-*-macos.zip
+          path: Sortle-*-macos.dmg
 
   windows:
     name: Windows app
@@ -130,13 +137,13 @@ jobs:
       - name: Zip
         shell: pwsh
         run: |
-          $name = "Mapex-${{ needs.version.outputs.number }}-windows"
+          $name = "Sortle-${{ needs.version.outputs.number }}-windows"
           Copy-Item -Recurse build\windows\x64\runner\Release $name
           Compress-Archive -Path $name -DestinationPath "$name.zip"
       - uses: actions/upload-artifact@v5
         with:
           name: windows
-          path: Mapex-*-windows.zip
+          path: Sortle-*-windows.zip
 
   linux:
     name: Linux app
@@ -159,13 +166,13 @@ jobs:
           --build-name=${{ needs.version.outputs.number }}
           --build-number=${{ github.run_number }}
       - run: |
-          name="Mapex-${{ needs.version.outputs.number }}-linux"
+          name="Sortle-${{ needs.version.outputs.number }}-linux"
           cp -r build/linux/x64/release/bundle "$name"
           tar -czf "$name.tar.gz" "$name"
       - uses: actions/upload-artifact@v5
         with:
           name: linux
-          path: Mapex-*-linux.tar.gz
+          path: Sortle-*-linux.tar.gz
 
   publish:
     name: Publish release
@@ -186,5 +193,5 @@ jobs:
           tag="v${{ needs.version.outputs.number }}"
           gh release create "$tag" dist/* \
             --target "${{ github.sha }}" \
-            --title "Mapex ${{ needs.version.outputs.number }}" \
+            --title "Sortle ${{ needs.version.outputs.number }}" \
             --generate-notes

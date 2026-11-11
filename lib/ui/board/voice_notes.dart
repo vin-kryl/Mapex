@@ -82,7 +82,7 @@ class _VoiceNotesSectionState extends ConsumerState<VoiceNotesSection> {
         if (mounted) {
           showMessage(
             context,
-            'Microphone access is off. Turn it on for Mapex in your '
+            'Microphone access is off. Turn it on for Sortle in your '
             'system settings.',
           );
         }

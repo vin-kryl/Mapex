@@ -345,7 +345,7 @@ class _ActionBar extends StatelessWidget {
     Widget action(IconData icon, String label, VoidCallback? onTap) => Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(Metrics.radius),
+        borderRadius: BorderRadius.circular(Look.of(context).radius),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Column(

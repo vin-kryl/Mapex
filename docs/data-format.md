@@ -4,7 +4,7 @@ Everything is stored in the app's private folder. Nothing leaves the device
 unless you export it.
 
 ```text
-mapex/
+sortle/
   settings.json
   boards/<board id>/
     board.json          the board itself
@@ -13,10 +13,10 @@ mapex/
   trash/<board id>/     boards moved to the trash, same layout, plus trashed.json
 ```
 
-- The `mapex` folder sits in the app's private folder: the app's files
+- The `sortle` folder sits in the app's private folder: the app's files
   directory on Android, the sandboxed Application Support folder on macOS,
-  `%APPDATA%\Vineet Khankriyal\Mapex` on Windows and
-  `~/.local/share/com.apeaxis.mapex` on Linux.
+  `%APPDATA%\Vineet Khankriyal\Sortle` on Windows and
+  `~/.local/share/com.apeaxis.sortle` on Linux.
 - `board.json` is written to a temporary file first and then renamed, so a
   crash mid-save never leaves a half-written board.
 - `history/` keeps the newest copies up to the **Versions kept per board**
@@ -48,7 +48,7 @@ update.
 
 ## Export files
 
-- `.mapex` is a zip with `board.json` at the top and the voice notes'
+- `.sortle` is a zip with `board.json` at the top and the voice notes'
   audio in `audio/`, at the same relative paths `board.json` uses.
 - `.json` is `board.json` on its own. Voice notes are left out, since their
   audio is not in the file.

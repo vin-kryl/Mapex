@@ -4,14 +4,14 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/json_read.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/model/schema.dart';
-import 'package:mapex/model/tree_ops.dart';
-import 'package:mapex/model/voice_note.dart';
-import 'package:mapex/storage/board_package.dart';
-import 'package:mapex/storage/board_repository.dart';
-import 'package:mapex/ui/export_import.dart';
+import 'package:sortle/model/json_read.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/model/schema.dart';
+import 'package:sortle/model/tree_ops.dart';
+import 'package:sortle/model/voice_note.dart';
+import 'package:sortle/storage/board_package.dart';
+import 'package:sortle/storage/board_repository.dart';
+import 'package:sortle/ui/export_import.dart';
 
 void main() {
   late Directory tmp;
@@ -19,7 +19,7 @@ void main() {
   var n = 0;
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('mapex_pkg_');
+    tmp = await Directory.systemTemp.createTemp('sortle_pkg_');
     repo = BoardRepository(root: tmp, historyCap: () => 200);
   });
 
@@ -57,9 +57,9 @@ void main() {
         readAudio: (p) => repo.readAudio(id, p),
       );
 
-  test('.mapex carries the board and its audio', () async {
+  test('.sortle carries the board and its audio', () async {
     final id = await boardWithVoice(['a', 'b'], withFile: {'a'});
-    final bytes = await export(id, ExportFormat.mapex);
+    final bytes = await export(id, ExportFormat.sortle);
     final pkg = BoardPackager.read(bytes);
     expect(pkg.board.id, id);
     // b's file was missing, so b is left out rather than broken.
@@ -111,7 +111,7 @@ void main() {
   group('import', () {
     test('a new board is added with its audio', () async {
       final id = await boardWithVoice(['a']);
-      final bytes = await export(id, ExportFormat.mapex);
+      final bytes = await export(id, ExportFormat.sortle);
       await repo.moveToTrash(id);
       await repo.deleteForever(id);
 
@@ -123,7 +123,7 @@ void main() {
 
     test('keep both adds a copy under a new id', () async {
       final id = await boardWithVoice(['a']);
-      final pkg = BoardPackager.read(await export(id, ExportFormat.mapex));
+      final pkg = BoardPackager.read(await export(id, ExportFormat.sortle));
       final copy = await repo.importBoard(pkg);
       expect(copy.id, isNot(id));
       expect((await repo.listBoards()).boards, hasLength(2));

@@ -138,8 +138,8 @@ class _BoardTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accent =
-        Palette.accents[board.id.hashCode.abs() % Palette.accents.length];
+    final colors = Look.of(context).nodeColors;
+    final accent = colors[board.id.hashCode.abs() % colors.length];
     return Card(
       clipBehavior: Clip.antiAlias,
       child: ListTile(
@@ -149,7 +149,7 @@ class _BoardTile extends ConsumerWidget {
         ),
         leading: CircleAvatar(
           backgroundColor: accent,
-          foregroundColor: Palette.ink,
+          foregroundColor: onColor(accent),
           child: Text(board.title.characters.first.toUpperCase()),
         ),
         title: Text(

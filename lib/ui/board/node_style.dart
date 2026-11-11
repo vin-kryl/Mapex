@@ -40,11 +40,14 @@ abstract final class NodeStyle {
   static String typeLabel(NodeType t) =>
       t == NodeType.task ? 'Task' : 'Decision';
 
-  static Color statusColor(Node n, ColorScheme scheme) => switch (n.status) {
-    NodeStatus.done => Palette.done,
-    NodeStatus.notYet => Palette.notYet,
-    NodeStatus.eliminated => scheme.onSurfaceVariant,
-    NodeStatus.pending =>
-      n.type == NodeType.decision ? Palette.lavender : scheme.onSurfaceVariant,
-  };
+  static Color statusColor(Node n, BuildContext context) {
+    final look = Look.of(context);
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return switch (n.status) {
+      NodeStatus.done => look.done,
+      NodeStatus.notYet => look.notYet,
+      NodeStatus.eliminated => muted,
+      NodeStatus.pending => n.type == NodeType.decision ? look.decision : muted,
+    };
+  }
 }

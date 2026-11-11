@@ -33,7 +33,7 @@ Future<void> exportBoard(
       dialogTitle: 'Export board',
       fileName: '${fileSafe(board.title)}.${format.extension}',
       bytes: bytes,
-      mimeType: format == ExportFormat.mapex
+      mimeType: format == ExportFormat.sortle
           ? 'application/zip'
           : 'application/json',
     );
@@ -45,7 +45,7 @@ Future<void> exportBoard(
   }
 }
 
-/// Picks a .mapex or .json file, checks it, and adds it to the board list.
+/// Picks a .sortle or .json file, checks it, and adds it to the board list.
 Future<void> importBoard(BuildContext context, WidgetRef ref) async {
   final Uint8List bytes;
   try {
@@ -122,12 +122,12 @@ Future<ExportFormat?> _pickFormat(
   required bool withAudio,
 }) {
   Widget tile(BuildContext c, ExportFormat f) {
-    final mapex = f == ExportFormat.mapex;
+    final sortle = f == ExportFormat.sortle;
     return ListTile(
-      leading: Icon(mapex ? Icons.folder_zip_outlined : Icons.data_object),
-      title: Text(mapex ? 'Mapex file (.mapex)' : 'Plain JSON (.json)'),
+      leading: Icon(sortle ? Icons.folder_zip_outlined : Icons.data_object),
+      title: Text(sortle ? 'Sortle file (.sortle)' : 'Plain JSON (.json)'),
       subtitle: Text(
-        mapex
+        sortle
             ? 'The board with its voice notes'
             : 'The board without voice notes',
       ),
@@ -136,8 +136,8 @@ Future<ExportFormat?> _pickFormat(
   }
 
   final order = withAudio
-      ? [ExportFormat.mapex, ExportFormat.json]
-      : [ExportFormat.json, ExportFormat.mapex];
+      ? [ExportFormat.sortle, ExportFormat.json]
+      : [ExportFormat.json, ExportFormat.sortle];
   return showModalBottomSheet<ExportFormat>(
     context: context,
     useSafeArea: true,

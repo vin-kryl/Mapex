@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/node.dart';
 import '../settings/app_settings.dart';
 import '../state/providers.dart';
+import 'look_settings.dart';
 import 'theme.dart';
 
 /// Settings that already do something. The rest of the brief's settings
@@ -42,6 +43,10 @@ class SettingsScreen extends ConsumerWidget {
                   onSelectionChanged: (v) =>
                       notifier.update(s.copyWith(theme: v.first)),
                 ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(bottom: Metrics.gutter * 1.5),
+                child: LookSettings(),
               ),
               _Section(
                 title: 'Text size',
@@ -158,7 +163,7 @@ class SettingsScreen extends ConsumerWidget {
               _Section(
                 title: 'Export with voice notes',
                 subtitle:
-                    'On: export suggests a .mapex file with the audio. '
+                    'On: export suggests a .sortle file with the audio. '
                     'Off: plain JSON first.',
                 child: Switch(
                   value: s.exportWithAudio,

@@ -59,7 +59,7 @@ class NoAlertPlatform implements AlertPlatform {
 
 /// Shows notifications from timers inside the running app. Used on Linux,
 /// where the system has no way to schedule them: reminders there fire only
-/// while Mapex is open.
+/// while Sortle is open.
 class InAppAlerts {
   InAppAlerts({required this.show, DateTime Function()? clock})
     : _clock = clock ?? DateTime.now;
@@ -105,7 +105,7 @@ class LocalAlertPlatform implements AlertPlatform {
 
   /// Identifies the app to Windows' notification centre. Fixed for good:
   /// changing it orphans notifications already booked.
-  static const _windowsGuid = '6f0c3b2e-8f4a-4d6b-9a51-2c7e3d9b1a40';
+  static const _windowsGuid = '81d021a2-6aa0-44c0-83e6-e8b90d7a378f';
 
   @override
   bool get repeatsNatively => !Platform.isWindows && !Platform.isLinux;
@@ -137,8 +137,8 @@ class LocalAlertPlatform implements AlertPlatform {
         iOS: darwin,
         linux: LinuxInitializationSettings(defaultActionName: 'Open'),
         windows: WindowsInitializationSettings(
-          appName: 'Mapex',
-          appUserModelId: 'com.apeaxis.mapex',
+          appName: 'Sortle',
+          appUserModelId: 'com.apeaxis.sortle',
           guid: _windowsGuid,
         ),
       ),

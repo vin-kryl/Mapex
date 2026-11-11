@@ -5,17 +5,17 @@ import 'state/providers.dart';
 import 'ui/home_shell.dart';
 import 'ui/theme.dart';
 
-class MapexApp extends ConsumerWidget {
-  const MapexApp({super.key});
+class SortleApp extends ConsumerWidget {
+  const SortleApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     return MaterialApp(
-      title: 'Mapex',
+      title: 'Sortle',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
+      theme: buildTheme(Brightness.light, settings),
+      darkTheme: buildTheme(Brightness.dark, settings),
       themeMode: themeModeOf(settings.theme),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context)

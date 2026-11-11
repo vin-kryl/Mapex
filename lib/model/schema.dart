@@ -40,7 +40,7 @@ class BoardSchema {
     }
     if (version > target) {
       throw SchemaException(
-        'this board was made by a newer version of Mapex '
+        'this board was made by a newer version of Sortle '
         '(format $version). Update the app to open it.',
       );
     }

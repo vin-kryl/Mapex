@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
+import 'platform/file_association.dart';
 import 'platform/incoming_files.dart';
 import 'reminders/alert_platform.dart';
 import 'reminders/plan.dart';
@@ -18,7 +19,7 @@ Future<void> main(List<String> args) async {
   // Application Support folder on macOS, %APPDATA% on Windows and
   // ~/.local/share on Linux.
   final support = await getApplicationSupportDirectory();
-  final appDir = Directory('${support.path}${Platform.pathSeparator}mapex');
+  final appDir = Directory('${support.path}${Platform.pathSeparator}sortle');
   await appDir.create(recursive: true);
   final settings = await SettingsStore(appDir).load();
 
@@ -66,8 +67,10 @@ Future<void> main(List<String> args) async {
     ),
   );
 
+  unawaited(FileAssociation.ensure());
+
   runApp(
-    UncontrolledProviderScope(container: container, child: const MapexApp()),
+    UncontrolledProviderScope(container: container, child: const SortleApp()),
   );
 
   // Top up repeating reminders and drop any for boards that are gone.

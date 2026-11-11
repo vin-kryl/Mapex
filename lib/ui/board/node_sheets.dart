@@ -167,7 +167,7 @@ class _EditSheetState extends State<_EditSheet> {
                   selected: _color == null,
                   onTap: () => setState(() => _color = null),
                 ),
-                for (final c in Palette.accents)
+                for (final c in Look.of(context).nodeColors)
                   _Swatch(
                     color: c,
                     selected: _color == NodeStyle.toHex(c),

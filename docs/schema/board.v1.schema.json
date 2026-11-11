@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/vin-kryl/Mapex/docs/schema/board.v1.schema.json",
-  "title": "Mapex board, format 1",
+  "$id": "https://github.com/vin-kryl/Sortle/docs/schema/board.v1.schema.json",
+  "title": "Sortle board, format 1",
   "type": "object",
   "required": ["schemaVersion", "id", "title", "createdAt", "updatedAt", "root"],
   "additionalProperties": false,

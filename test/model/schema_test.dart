@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mapex/model/board.dart';
-import 'package:mapex/model/json_read.dart';
-import 'package:mapex/model/node.dart';
-import 'package:mapex/model/reminder.dart';
-import 'package:mapex/model/schema.dart';
-import 'package:mapex/model/voice_note.dart';
+import 'package:sortle/model/board.dart';
+import 'package:sortle/model/json_read.dart';
+import 'package:sortle/model/node.dart';
+import 'package:sortle/model/reminder.dart';
+import 'package:sortle/model/schema.dart';
+import 'package:sortle/model/voice_note.dart';
 
 final t0 = DateTime.utc(2026, 11, 10, 9);
 

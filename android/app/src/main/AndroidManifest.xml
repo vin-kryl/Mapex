@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
-        android:label="Mapex"
+        android:label="Sortle"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
@@ -39,7 +39,7 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Open a board file from Files, or share one to Mapex. Content
+            <!-- Open a board file from Files, or share one to Sortle. Content
                  URIs rarely keep the file extension, so match on type; the
                  app checks the contents before importing. -->
             <intent-filter>

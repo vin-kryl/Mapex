@@ -34,14 +34,14 @@ class NodeCard extends StatelessWidget {
     final border = selected
         ? Border.all(color: scheme.primary, width: 2)
         : Border.all(
-            color: taken ? Palette.mint : scheme.outline,
+            color: taken ? Look.of(context).taken : scheme.outline,
             width: taken ? 2 : 1,
           );
     final card = Container(
       decoration: BoxDecoration(
         color: accent?.withValues(alpha: 0.35) ?? scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(
-          decision ? Metrics.radius / 2 : Metrics.radius,
+          decision ? Look.of(context).radius / 2 : Look.of(context).radius,
         ),
         border: border,
       ),
@@ -51,7 +51,7 @@ class NodeCard extends StatelessWidget {
           Icon(
             NodeStyle.statusIcon(node),
             size: 18,
-            color: NodeStyle.statusColor(node, scheme),
+            color: NodeStyle.statusColor(node, context),
           ),
           const SizedBox(width: 8),
           Expanded(
