@@ -73,6 +73,36 @@ void main() {
     await editor().flush();
   });
 
+  test('moving a node on the canvas moves only that node', () async {
+    final rootId = state().board.root.id;
+    final a = editor().addChild(rootId, 'A');
+    final b = editor().addChild(a, 'B');
+    editor().place({a: const NodePosition(300, 120)});
+    final root = state().board.root;
+    expect(TreeOps.find(root, a)!.position, const NodePosition(300, 120));
+    expect(TreeOps.find(root, b)!.position, isNull);
+    expect(TreeOps.parentOf(root, b)!.id, a);
+    expect(state().undoLabel, 'Move on canvas');
+
+    editor().undo();
+    expect(TreeOps.find(state().board.root, a)!.position, isNull);
+    await editor().flush();
+  });
+
+  test('tidy up forgets every position', () async {
+    final rootId = state().board.root.id;
+    final a = editor().addChild(rootId, 'A');
+    editor().place({
+      rootId: const NodePosition(0, 0),
+      a: const NodePosition(-80, 400),
+    });
+    editor().tidyUp();
+    final root = state().board.root;
+    expect(root.position, isNull);
+    expect(TreeOps.find(root, a)!.position, isNull);
+    await editor().flush();
+  });
+
   test('undo depth follows the setting', () async {
     final rootId = state().board.root.id;
     for (var i = 0; i < 5; i++) {

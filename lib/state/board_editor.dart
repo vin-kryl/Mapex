@@ -322,6 +322,13 @@ class BoardEditor extends AsyncNotifier<EditorState> {
   void move(String id, String newParentId) =>
       apply('Move', (root, _) => TreeOps.move(root, id, newParentId));
 
+  /// Drops nodes where the user dragged them on the canvas.
+  void place(Map<String, NodePosition> positions) =>
+      apply('Move on canvas', (root, _) => TreeOps.place(root, positions));
+
+  /// Lines the whole board up neatly again.
+  void tidyUp() => apply('Tidy up', (root, _) => TreeOps.clearPositions(root));
+
   void setCollapsed(String id, bool collapsed) => apply(
     collapsed ? 'Collapse' : 'Expand',
     (root, _) => TreeOps.setCollapsed(root, id, collapsed),
