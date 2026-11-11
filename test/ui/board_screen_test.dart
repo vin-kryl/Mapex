@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mapex/model/node.dart';
 import 'package:mapex/model/tree_ops.dart';
+import 'package:mapex/settings/app_settings.dart';
 import 'package:mapex/state/board_editor.dart';
 import 'package:mapex/state/providers.dart';
 import 'package:mapex/storage/board_repository.dart';
@@ -47,7 +48,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          theme: buildTheme(Brightness.light),
+          theme: buildTheme(Brightness.light, AppSettings.defaults),
           home: BoardScreen(boardId: boardId),
         ),
       ),

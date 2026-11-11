@@ -36,6 +36,13 @@ class AppSettings {
     required this.historyCap,
     required this.snoozeMinutes,
     required this.repeatsScheduledAhead,
+    required this.accentColor,
+    required this.nodeColors,
+    required this.decisionColor,
+    required this.takenColor,
+    required this.doneColor,
+    required this.notYetColor,
+    required this.cornerRadius,
   });
 
   static const defaults = AppSettings(
@@ -51,6 +58,20 @@ class AppSettings {
     historyCap: 200,
     snoozeMinutes: 60,
     repeatsScheduledAhead: 5,
+    accentColor: null,
+    nodeColors: [
+      '#C9B8FF',
+      '#B5EBD3',
+      '#FFD2B8',
+      '#B8DBFF',
+      '#FFEDA8',
+      '#FFC2D4',
+    ],
+    decisionColor: '#9B84F0',
+    takenColor: '#7DD3AE',
+    doneColor: '#2F9E6E',
+    notYetColor: '#C77D1E',
+    cornerRadius: 16,
   );
 
   /// Bounds used by the settings screen and when reading the file.
@@ -59,6 +80,11 @@ class AppSettings {
   static const fontScaleRange = (min: 0.8, max: 1.6);
   static const snoozeRange = (min: 1, max: 10080);
   static const repeatsAheadRange = (min: 1, max: 50);
+  static const cornerRadiusRange = (min: 0.0, max: 28.0);
+  static const nodeColorsRange = (min: 1, max: 16);
+
+  /// `#RRGGBB`.
+  static final hexColor = RegExp(r'^#[0-9A-Fa-f]{6}$');
 
   final LayoutDirection layoutDirection;
   final NodeType defaultNodeType;
@@ -80,6 +106,23 @@ class AppSettings {
   /// with the system at a time. Topped up whenever the app opens.
   final int repeatsScheduledAhead;
 
+  /// The app's main colour as `#RRGGBB`, or null for plain black and white.
+  final String? accentColor;
+
+  /// The colours offered for colour-coding nodes.
+  final List<String> nodeColors;
+
+  /// Marks decision nodes.
+  final String decisionColor;
+
+  /// Outlines the path picked in a decision.
+  final String takenColor;
+  final String doneColor;
+  final String notYetColor;
+
+  /// How rounded cards, nodes and buttons are.
+  final double cornerRadius;
+
   AppSettings copyWith({
     LayoutDirection? layoutDirection,
     NodeType? defaultNodeType,
@@ -93,6 +136,13 @@ class AppSettings {
     int? historyCap,
     int? snoozeMinutes,
     int? repeatsScheduledAhead,
+    String? Function()? accentColor,
+    List<String>? nodeColors,
+    String? decisionColor,
+    String? takenColor,
+    String? doneColor,
+    String? notYetColor,
+    double? cornerRadius,
   }) {
     return AppSettings(
       layoutDirection: layoutDirection ?? this.layoutDirection,
@@ -110,6 +160,13 @@ class AppSettings {
       snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
       repeatsScheduledAhead:
           repeatsScheduledAhead ?? this.repeatsScheduledAhead,
+      accentColor: accentColor == null ? this.accentColor : accentColor(),
+      nodeColors: nodeColors ?? this.nodeColors,
+      decisionColor: decisionColor ?? this.decisionColor,
+      takenColor: takenColor ?? this.takenColor,
+      doneColor: doneColor ?? this.doneColor,
+      notYetColor: notYetColor ?? this.notYetColor,
+      cornerRadius: cornerRadius ?? this.cornerRadius,
     );
   }
 
@@ -126,6 +183,13 @@ class AppSettings {
     'historyCap': historyCap,
     'snoozeMinutes': snoozeMinutes,
     'repeatsScheduledAhead': repeatsScheduledAhead,
+    'accentColor': accentColor,
+    'nodeColors': nodeColors,
+    'decisionColor': decisionColor,
+    'takenColor': takenColor,
+    'doneColor': doneColor,
+    'notYetColor': notYetColor,
+    'cornerRadius': cornerRadius,
   };
 
   /// Lenient: a bad or missing value is replaced by its default.
@@ -154,6 +218,21 @@ class AppSettings {
       final v = pick(() => readInt(map, key, 'settings'), fallback);
       return v < 0 ? fallback : v;
     }
+
+    String color(String key, String fallback) {
+      final v = map[key];
+      return v is String && hexColor.hasMatch(v) ? v.toUpperCase() : fallback;
+    }
+
+    final rawNodeColors = map['nodeColors'];
+    final nodeColors = rawNodeColors is List
+        ? [
+            for (final c in rawNodeColors)
+              if (c is String && hexColor.hasMatch(c)) c.toUpperCase(),
+          ].take(nodeColorsRange.max).toList()
+        : d.nodeColors;
+    final rawAccent = map['accentColor'];
+    final rawRadius = map['cornerRadius'];
 
     final rawScale = map['fontScale'];
     final scale = rawScale is num
@@ -199,6 +278,20 @@ class AppSettings {
         d.repeatsScheduledAhead,
         repeatsAheadRange,
       ),
+      accentColor: rawAccent is String && hexColor.hasMatch(rawAccent)
+          ? rawAccent.toUpperCase()
+          : null,
+      nodeColors: nodeColors.isEmpty ? d.nodeColors : nodeColors,
+      decisionColor: color('decisionColor', d.decisionColor),
+      takenColor: color('takenColor', d.takenColor),
+      doneColor: color('doneColor', d.doneColor),
+      notYetColor: color('notYetColor', d.notYetColor),
+      cornerRadius: rawRadius is num
+          ? rawRadius.toDouble().clamp(
+              cornerRadiusRange.min,
+              cornerRadiusRange.max,
+            )
+          : d.cornerRadius,
     );
   }
 }

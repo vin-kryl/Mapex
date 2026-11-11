@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
+import 'platform/file_association.dart';
 import 'platform/incoming_files.dart';
 import 'reminders/alert_platform.dart';
 import 'reminders/plan.dart';
@@ -65,6 +66,8 @@ Future<void> main(List<String> args) async {
       (file) => container.read(incomingFilesProvider.notifier).add(file),
     ),
   );
+
+  unawaited(FileAssociation.ensure());
 
   runApp(
     UncontrolledProviderScope(container: container, child: const MapexApp()),

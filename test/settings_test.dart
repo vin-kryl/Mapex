@@ -51,4 +51,24 @@ void main() {
     File('${tmp.path}/settings.json').writeAsStringSync('{broken');
     expect((await store.load()).historyCap, 200);
   });
+
+  test('look: colours are checked, radius clamped', () {
+    final s = AppSettings.fromJson({
+      'accentColor': '#2563eb',
+      'nodeColors': ['#ABCDEF', 'red', 12, '#123456'],
+      'doneColor': 'green',
+      'cornerRadius': 99,
+    });
+    expect(s.accentColor, '#2563EB');
+    expect(s.nodeColors, ['#ABCDEF', '#123456']);
+    expect(s.doneColor, AppSettings.defaults.doneColor);
+    expect(s.cornerRadius, AppSettings.cornerRadiusRange.max);
+    expect(
+      AppSettings.fromJson({'nodeColors': []}).nodeColors,
+      AppSettings.defaults.nodeColors,
+    );
+    final back = AppSettings.fromJson(s.toJson());
+    expect(back.nodeColors, s.nodeColors);
+    expect(s.copyWith(accentColor: () => null).accentColor, isNull);
+  });
 }

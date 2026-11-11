@@ -14,8 +14,8 @@ class MapexApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Mapex',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
+      theme: buildTheme(Brightness.light, settings),
+      darkTheme: buildTheme(Brightness.dark, settings),
       themeMode: themeModeOf(settings.theme),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context)

@@ -59,9 +59,9 @@ class OutlineView extends StatelessWidget {
           opacity: eliminated ? NodeStyle.eliminatedOpacity : 1,
           child: Material(
             color: selected ? scheme.surfaceContainerLow : Colors.transparent,
-            borderRadius: BorderRadius.circular(Metrics.radius / 2),
+            borderRadius: BorderRadius.circular(Look.of(context).radius / 2),
             child: InkWell(
-              borderRadius: BorderRadius.circular(Metrics.radius / 2),
+              borderRadius: BorderRadius.circular(Look.of(context).radius / 2),
               onTap: () => onTap(node),
               onLongPress: () => onLongPress(node),
               child: ConstrainedBox(
@@ -87,7 +87,7 @@ class OutlineView extends StatelessWidget {
                     Icon(
                       NodeStyle.statusIcon(node),
                       size: 18,
-                      color: NodeStyle.statusColor(node, scheme),
+                      color: NodeStyle.statusColor(node, context),
                     ),
                     const SizedBox(width: 10),
                     if (NodeStyle.parseColor(node.color) case final c?)
