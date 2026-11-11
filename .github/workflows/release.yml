@@ -1,8 +1,8 @@
 name: Release
 
-# Builds Sortle for Android, macOS, Windows and Linux and attaches the files
-# to a GitHub Release. Start it from the Actions tab (Release, Run workflow,
-# type the version), or push a tag like v0.2.0.
+# Builds Sortle for Android, iOS, macOS, Windows and Linux and attaches the
+# files to a GitHub Release. Start it from the Actions tab (Release, Run
+# workflow, type the version), or push a tag like v0.2.0.
 on:
   workflow_dispatch:
     inputs:
@@ -115,6 +115,34 @@ jobs:
           name: macos
           path: Sortle-*-macos.dmg
 
+  ios:
+    name: iOS app
+    needs: version
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Flutter
+        run: |
+          git clone --depth 1 --branch "$(cat .flutter-version)" https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter --disable-analytics && flutter pub get
+      - run: >-
+          flutter build ios --release --no-codesign
+          --build-name=${{ needs.version.outputs.number }}
+          --build-number=${{ github.run_number }}
+      # Unsigned. AltStore or Sideloadly signs it with the user's own Apple ID
+      # when they install it.
+      - name: Package
+        run: |
+          mkdir Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qr "Sortle-${{ needs.version.outputs.number }}-ios.ipa" Payload
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ios
+          path: Sortle-*-ios.ipa
+
   windows:
     name: Windows app
     needs: version
@@ -176,7 +204,7 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [version, android, macos, windows, linux]
+    needs: [version, android, ios, macos, windows, linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write

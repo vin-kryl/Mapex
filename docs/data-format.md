@@ -14,8 +14,8 @@ sortle/
 ```
 
 - The `sortle` folder sits in the app's private folder: the app's files
-  directory on Android, the sandboxed Application Support folder on macOS,
-  `%APPDATA%\Vineet Khankriyal\Sortle` on Windows and
+  directory on Android, the sandboxed Application Support folder on iOS and
+  macOS, `%APPDATA%\Vineet Khankriyal\Sortle` on Windows and
   `~/.local/share/com.apeaxis.sortle` on Linux.
 - `board.json` is written to a temporary file first and then renamed, so a
   crash mid-save never leaves a half-written board.

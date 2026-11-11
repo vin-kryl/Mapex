@@ -92,8 +92,8 @@ class InAppAlerts {
 }
 
 /// Real notifications via flutter_local_notifications. Works when the app is
-/// closed on Android (alarms), macOS (UNUserNotificationCenter) and Windows
-/// (scheduled toasts). On Linux they come from [InAppAlerts].
+/// closed on Android (alarms), iOS and macOS (UNUserNotificationCenter) and
+/// Windows (scheduled toasts). On Linux they come from [InAppAlerts].
 class LocalAlertPlatform implements AlertPlatform {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _exact = false;
