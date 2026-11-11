@@ -22,7 +22,7 @@ class NodeCard extends StatelessWidget {
   /// Picked as the path taken by its parent decision.
   final bool taken;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
   final VoidCallback onToggleCollapse;
 
   @override

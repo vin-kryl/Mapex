@@ -101,6 +101,12 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                     icon: const Icon(Icons.redo),
                     onPressed: s.canRedo ? _editor.redo : null,
                   ),
+                  if (_view == BoardView.canvas)
+                    IconButton(
+                      tooltip: 'Tidy up',
+                      icon: const Icon(Icons.auto_awesome_mosaic_outlined),
+                      onPressed: _editor.tidyUp,
+                    ),
                   IconButton(
                     tooltip: _view == BoardView.canvas
                         ? 'Outline view'
@@ -136,12 +142,15 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                       onTap: () => setState(() => _selectedId = null),
                       child: _view == BoardView.canvas
                           ? CanvasView(
-                              root: shown,
+                              root: root,
+                              shown: shown,
                               direction: direction,
                               selectedId: selected?.id,
                               onTap: _onTap,
                               onLongPress: (n) => _onLongPress(n, root),
                               onToggleCollapse: _toggle,
+                              onPlace: _editor.place,
+                              onDropOn: _editor.dropOn,
                             )
                           : OutlineView(
                               root: shown,
