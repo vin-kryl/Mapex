@@ -10,10 +10,15 @@ branch by branch, then track which paths you took and what comes next.
 ## Status
 
 Boards (create, rename, duplicate, trash, restore, revert to an earlier
-version), the tree canvas and outline view, task and decision nodes,
+version), starting from a template, a canvas where each node can be dragged
+anywhere and dropped on another to re-attach it, the outline view, task and
+decision nodes,
 undo/redo, reminders with repeats, the "Which one did you do?" decision
 prompt, the Today screen, voice notes, .sortle / JSON export and import, and
-a configurable look work on every platform.
+a configurable look work on every platform. On a computer or tablet the app
+has a sidebar of boards and a details panel beside the canvas; on a Mac the
+sidebar is frosted like Finder's. On Android 12 and later the main colour can
+follow the wallpaper.
 
 ## Download
 
@@ -64,5 +69,6 @@ alias `upload`).
 
 ## Licence
 
-MIT. The Funnel Display font is under the SIL Open Font Licence, see
-[assets/fonts/OFL.txt](assets/fonts/OFL.txt).
+MIT. The Funnel Display and Inter fonts are under the SIL Open Font Licence,
+see [assets/fonts/OFL.txt](assets/fonts/OFL.txt) and
+[assets/fonts/Inter-OFL.txt](assets/fonts/Inter-OFL.txt).
