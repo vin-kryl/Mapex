@@ -41,8 +41,8 @@ class LookSettings extends ConsumerWidget {
           runSpacing: 10,
           children: [
             ColorDot(
-              color: null,
-              label: 'Black and white',
+              color: defaultAccent(),
+              label: 'Default',
               selected: s.accentColor == null,
               onTap: () => save(s.copyWith(accentColor: () => null)),
             ),
@@ -113,7 +113,6 @@ class LookSettings extends ConsumerWidget {
             s.decisionColor,
             (String v) => s.copyWith(decisionColor: v),
           ),
-          ('Path taken', s.takenColor, (String v) => s.copyWith(takenColor: v)),
           ('Done', s.doneColor, (String v) => s.copyWith(doneColor: v)),
           ('Not yet', s.notYetColor, (String v) => s.copyWith(notYetColor: v)),
         ])
@@ -130,6 +129,37 @@ class LookSettings extends ConsumerWidget {
               },
             ),
           ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Path taken'),
+          subtitle: s.takenColor == null
+              ? const Text('Same as the main colour')
+              : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (s.takenColor != null)
+                TextButton(
+                  onPressed: () => save(s.copyWith(takenColor: () => null)),
+                  child: const Text('Use main colour'),
+                ),
+              ColorDot(
+                color: s.takenColor == null
+                    ? Theme.of(context).colorScheme.primary
+                    : hexToColor(s.takenColor!),
+                label: 'Path taken colour',
+                selected: false,
+                onTap: () async {
+                  final v = await pickColor(
+                    context,
+                    initial: s.takenColor ?? colorToHex(defaultAccent()),
+                  );
+                  if (v != null) save(s.copyWith(takenColor: () => v));
+                },
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: Metrics.gutter),
         Row(
           children: [
@@ -156,7 +186,7 @@ class LookSettings extends ConsumerWidget {
                   accentColor: () => d.accentColor,
                   nodeColors: d.nodeColors,
                   decisionColor: d.decisionColor,
-                  takenColor: d.takenColor,
+                  takenColor: () => d.takenColor,
                   doneColor: d.doneColor,
                   notYetColor: d.notYetColor,
                   cornerRadius: d.cornerRadius,
