@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -160,6 +161,16 @@ class LookSettings extends ConsumerWidget {
             ],
           ),
         ),
+        if (defaultTargetPlatform == TargetPlatform.android)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Use wallpaper colours'),
+            subtitle: const Text(
+              'On Android 12 and later, when Default is the main colour.',
+            ),
+            value: s.wallpaperColors,
+            onChanged: (v) => save(s.copyWith(wallpaperColors: v)),
+          ),
         const SizedBox(height: Metrics.gutter),
         Row(
           children: [
@@ -190,6 +201,7 @@ class LookSettings extends ConsumerWidget {
                   doneColor: d.doneColor,
                   notYetColor: d.notYetColor,
                   cornerRadius: d.cornerRadius,
+                  wallpaperColors: d.wallpaperColors,
                 ),
               );
             },

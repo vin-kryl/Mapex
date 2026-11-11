@@ -43,6 +43,7 @@ class AppSettings {
     required this.doneColor,
     required this.notYetColor,
     required this.cornerRadius,
+    required this.wallpaperColors,
   });
 
   static const defaults = AppSettings(
@@ -72,6 +73,7 @@ class AppSettings {
     doneColor: '#34C759',
     notYetColor: '#FF9F0A',
     cornerRadius: 10,
+    wallpaperColors: false,
   );
 
   /// Defaults from earlier versions. A settings file still holding one of
@@ -142,6 +144,10 @@ class AppSettings {
   /// How rounded cards, nodes and buttons are.
   final double cornerRadius;
 
+  /// Android 12 and later: take the main colour from the wallpaper, unless
+  /// a main colour is picked.
+  final bool wallpaperColors;
+
   AppSettings copyWith({
     LayoutDirection? layoutDirection,
     NodeType? defaultNodeType,
@@ -162,6 +168,7 @@ class AppSettings {
     String? doneColor,
     String? notYetColor,
     double? cornerRadius,
+    bool? wallpaperColors,
   }) {
     return AppSettings(
       layoutDirection: layoutDirection ?? this.layoutDirection,
@@ -186,6 +193,7 @@ class AppSettings {
       doneColor: doneColor ?? this.doneColor,
       notYetColor: notYetColor ?? this.notYetColor,
       cornerRadius: cornerRadius ?? this.cornerRadius,
+      wallpaperColors: wallpaperColors ?? this.wallpaperColors,
     );
   }
 
@@ -209,6 +217,7 @@ class AppSettings {
     'doneColor': doneColor,
     'notYetColor': notYetColor,
     'cornerRadius': cornerRadius,
+    'wallpaperColors': wallpaperColors,
   };
 
   /// Lenient: a bad or missing value is replaced by its default.
@@ -328,6 +337,10 @@ class AppSettings {
               cornerRadiusRange.max,
             )
           : d.cornerRadius,
+      wallpaperColors: pick(
+        () => readBool(map, 'wallpaperColors', 's'),
+        d.wallpaperColors,
+      ),
     );
   }
 }

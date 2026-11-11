@@ -52,6 +52,16 @@ void main() {
     expect((await store.load()).historyCap, 200);
   });
 
+  test('wallpaper colours are off unless turned on', () {
+    expect(AppSettings.defaults.wallpaperColors, isFalse);
+    expect(
+      AppSettings.fromJson({'wallpaperColors': 'yes'}).wallpaperColors,
+      isFalse,
+    );
+    final on = AppSettings.defaults.copyWith(wallpaperColors: true);
+    expect(AppSettings.fromJson(on.toJson()).wallpaperColors, isTrue);
+  });
+
   test('look: colours are checked, radius clamped', () {
     final s = AppSettings.fromJson({
       'accentColor': '#2563eb',
