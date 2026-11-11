@@ -269,4 +269,38 @@ abstract final class TreeOps {
 
   static Node setCollapsed(Node root, String id, bool collapsed) =>
       update(root, id, (n) => n.copyWith(collapsed: collapsed));
+
+  /// Puts each listed node at its new spot on the canvas. Only positions
+  /// change; who is connected to whom stays the same.
+  static Node place(Node root, Map<String, NodePosition> positions) {
+    if (positions.isEmpty) return root;
+    Node walk(Node n) {
+      final kids = [for (final c in n.children) walk(c)];
+      final spot = positions[n.id];
+      final changed = spot != null && spot != n.position;
+      final kidsChanged = !_same(kids, n.children);
+      if (!changed && !kidsChanged) return n;
+      return n.copyWith(
+        position: changed ? () => spot : null,
+        children: kidsChanged ? kids : null,
+      );
+    }
+
+    return walk(root);
+  }
+
+  /// Forgets every position, so the canvas lines the whole tree up again.
+  static Node clearPositions(Node root) {
+    final kids = [for (final c in root.children) clearPositions(c)];
+    if (root.position == null && _same(kids, root.children)) return root;
+    return root.copyWith(position: () => null, children: kids);
+  }
+
+  static bool _same(List<Node> a, List<Node> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!identical(a[i], b[i])) return false;
+    }
+    return true;
+  }
 }

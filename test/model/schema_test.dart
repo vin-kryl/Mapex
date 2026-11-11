@@ -37,6 +37,7 @@ Board sampleBoard() => Board(
     color: '#C9B8FF',
     tags: ['work'],
     chosenChildIds: ['a'],
+    position: const NodePosition(40, -12.5),
     createdAt: t0,
     updatedAt: t0,
     children: [
@@ -64,6 +65,12 @@ void main() {
     final text = BoardSchema.encode(sampleBoard());
     final again = BoardSchema.encode(BoardSchema.decode(text));
     expect(again, text);
+  });
+
+  test('a placed node keeps its position', () {
+    final again = BoardSchema.decode(BoardSchema.encode(sampleBoard()));
+    expect(again.root.position, const NodePosition(40, -12.5));
+    expect(again.root.children.first.position, isNull);
   });
 
   test('the file carries the current schema version', () {
@@ -167,6 +174,17 @@ void main() {
       }, 'intervalMinutes');
     });
     test(
+      'position that is not a pair of numbers',
+      () => expectRejected(
+        (j) => root(j)['position'] = {'x': 'left', 'y': 0},
+        'position.x',
+      ),
+    );
+    test(
+      'missing position',
+      () => expectRejected((j) => root(j).remove('position'), 'position'),
+    );
+    test(
       'file from a newer app',
       () => expectRejected(
         (j) => j['schemaVersion'] = BoardSchema.currentVersion + 1,
@@ -177,7 +195,7 @@ void main() {
 
   group('migration', () {
     test('runs each step in order up to the target version', () {
-      final json = sampleJson();
+      final json = sampleJson()..['schemaVersion'] = 1;
       final migrated = BoardSchema.migrate(
         json,
         target: 3,
@@ -193,7 +211,11 @@ void main() {
 
     test('a missing step is reported', () {
       expect(
-        () => BoardSchema.migrate(sampleJson(), target: 2, migrations: {}),
+        () => BoardSchema.migrate(
+          sampleJson(),
+          target: BoardSchema.currentVersion + 1,
+          migrations: {},
+        ),
         throwsA(
           isA<SchemaException>().having(
             (e) => e.message,
@@ -202,6 +224,22 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('a format 1 board opens with every node unplaced', () {
+      final json = sampleJson()..['schemaVersion'] = 1;
+      void strip(Map<String, Object?> n) {
+        n.remove('position');
+        for (final k in n['children']! as List<Object?>) {
+          strip(k! as Map<String, Object?>);
+        }
+      }
+
+      strip(json['root']! as Map<String, Object?>);
+      final board = BoardSchema.decode(jsonEncode(json));
+      expect(board.root.position, isNull);
+      expect(board.root.children.first.children.first.position, isNull);
+      expect(board.nodeCount, 6);
     });
 
     test('version 0 or below is rejected', () {

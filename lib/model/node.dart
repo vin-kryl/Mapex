@@ -26,6 +26,37 @@ enum NodeStatus {
       readEnum(NodeStatus.values, value, path);
 }
 
+/// Where a node sits on the canvas, in logical pixels from the board's
+/// origin. Free to be anywhere; only the tree decides who is connected to whom.
+class NodePosition {
+  const NodePosition(this.x, this.y);
+
+  final double x;
+  final double y;
+
+  @override
+  bool operator ==(Object other) =>
+      other is NodePosition && other.x == x && other.y == y;
+
+  @override
+  int get hashCode => Object.hash(x, y);
+
+  @override
+  String toString() => 'NodePosition($x, $y)';
+
+  Map<String, Object?> toJson() => {'x': x, 'y': y};
+
+  static NodePosition fromJson(Object? json, String path) {
+    final map = readMap(json, path);
+    final x = readDouble(map, 'x', path);
+    final y = readDouble(map, 'y', path);
+    if (!x.isFinite || !y.isFinite) {
+      throw SchemaException('$path must hold finite numbers');
+    }
+    return NodePosition(x, y);
+  }
+}
+
 /// One node of a board's tree. Immutable; edits return a new node.
 class Node {
   const Node({
@@ -44,6 +75,7 @@ class Node {
     this.tags = const [],
     this.chosenChildIds = const [],
     this.collapsed = false,
+    this.position,
     this.children = const [],
   });
 
@@ -68,6 +100,10 @@ class Node {
   /// Decision nodes only: the children that were picked (the taken paths).
   final List<String> chosenChildIds;
   final bool collapsed;
+
+  /// Where the user placed this node on the canvas. Null until it has been
+  /// placed, in which case the canvas arranges it automatically.
+  final NodePosition? position;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<Node> children;
@@ -90,6 +126,7 @@ class Node {
     List<String>? tags,
     List<String>? chosenChildIds,
     bool? collapsed,
+    NodePosition? Function()? position,
     DateTime? createdAt,
     DateTime? updatedAt,
     List<Node>? children,
@@ -108,6 +145,7 @@ class Node {
       tags: tags ?? this.tags,
       chosenChildIds: chosenChildIds ?? this.chosenChildIds,
       collapsed: collapsed ?? this.collapsed,
+      position: position != null ? position() : this.position,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       children: children ?? this.children,
@@ -128,6 +166,7 @@ class Node {
     'tags': tags,
     'chosenChildIds': chosenChildIds,
     'collapsed': collapsed,
+    'position': position?.toJson(),
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     'children': [for (final c in children) c.toJson()],
@@ -167,6 +206,10 @@ class Node {
     }
     final voiceJson = readList(map, 'voiceNotes', path);
     final reminderJson = map['reminder'];
+    if (!map.containsKey('position')) {
+      throw SchemaException('$path.position is missing');
+    }
+    final positionJson = map['position'];
     return Node(
       id: readString(map, 'id', path),
       title: title,
@@ -186,6 +229,9 @@ class Node {
       tags: readStringList(map, 'tags', path),
       chosenChildIds: chosen,
       collapsed: readBool(map, 'collapsed', path),
+      position: positionJson == null
+          ? null
+          : NodePosition.fromJson(positionJson, '$path.position'),
       createdAt: readDateTime(map, 'createdAt', path),
       updatedAt: readDateTime(map, 'updatedAt', path),
       children: children,
