@@ -6,7 +6,7 @@ import '../model/tree_ops.dart';
 import '../reminders/timing.dart';
 import '../state/board_editor.dart';
 import '../state/providers.dart';
-import 'board/board_screen.dart';
+import 'shell/shell_scope.dart';
 import 'theme.dart';
 
 /// Asks "Done?" for a task or "Which one of these did you do?" for a
@@ -294,18 +294,6 @@ Future<void> _showNextSteps(
           ),
         ],
       ),
-    ),
-  );
-}
-
-void openBoardAt(
-  BuildContext context, {
-  required String boardId,
-  String? nodeId,
-}) {
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (_) => BoardScreen(boardId: boardId, initialNodeId: nodeId),
     ),
   );
 }

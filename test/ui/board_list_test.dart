@@ -32,9 +32,6 @@ void main() {
         child: const SortleApp(),
       ),
     );
-    // The app opens on Today; these tests are about the Boards tab.
-    await tester.tap(find.byType(NavigationDestination).last);
-    await tester.pump();
   }
 
   /// File work needs the real event loop, which widget tests only run
@@ -77,7 +74,7 @@ void main() {
   testWidgets('creating a board opens it', (tester) async {
     await pumpApp(tester);
     await settle(tester);
-    await tester.tap(find.text('New board'));
+    await tester.tap(find.byTooltip('New board'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Side project');
     await tester.pump();

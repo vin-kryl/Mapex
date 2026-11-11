@@ -115,7 +115,7 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      _progress(root),
+                      NodeStyle.progress(root),
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w400,
@@ -234,17 +234,6 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
         );
       },
     );
-  }
-
-  /// "2 of 5 done" over every task and decision below the top.
-  static String _progress(Node root) {
-    final all = [
-      for (final e in TreeOps.walk(root))
-        if (e.depth > 0 && e.node.status != NodeStatus.eliminated) e.node,
-    ];
-    if (all.isEmpty) return 'No steps yet';
-    final done = all.where((n) => n.status == NodeStatus.done).length;
-    return '$done of ${all.length} done';
   }
 
   /// Tap selects; tapping the selected node again opens its editor. With
@@ -514,7 +503,7 @@ class _ViewSwitch extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: t.hairline.withValues(alpha: 0.5),
+        color: t.hairline,
         borderRadius: BorderRadius.circular(7),
       ),
       child: Row(
@@ -552,7 +541,7 @@ class _ToolButton extends StatelessWidget {
       color: selected ? t.text : t.secondary,
       disabledColor: t.tertiary,
       style: IconButton.styleFrom(
-        backgroundColor: selected ? t.hairline.withValues(alpha: 0.6) : null,
+        backgroundColor: selected ? t.hairline : null,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
         minimumSize: const Size(34, 30),
         padding: EdgeInsets.zero,

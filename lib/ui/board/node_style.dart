@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../model/node.dart';
+import '../../model/tree_ops.dart';
 import '../../reminders/timing.dart';
 import '../format.dart';
 import '../theme.dart';
@@ -9,6 +10,17 @@ import '../theme.dart';
 abstract final class NodeStyle {
   /// How faded eliminated nodes are.
   static const eliminatedOpacity = 0.42;
+
+  /// "2 of 5 done" over every step below the top of [root].
+  static String progress(Node root) {
+    final all = [
+      for (final e in TreeOps.walk(root))
+        if (e.depth > 0 && e.node.status != NodeStatus.eliminated) e.node,
+    ];
+    if (all.isEmpty) return 'No steps yet';
+    final done = all.where((n) => n.status == NodeStatus.done).length;
+    return '$done of ${all.length} done';
+  }
 
   /// The one quiet line under a node's title, or null for none.
   static ({String text, DetailTone tone})? detail(
