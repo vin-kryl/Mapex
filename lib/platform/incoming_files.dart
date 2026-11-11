@@ -33,9 +33,9 @@ final incomingFilesProvider =
 
 /// Connects the platform side to [IncomingFiles].
 ///
-/// Android and macOS hand files over on the `sortle/files` channel: the app
-/// asks for any that arrived before it was ready, then is told about new
-/// ones. Windows and Linux pass the file path as a command-line argument.
+/// Android, iOS and macOS hand files over on the `sortle/files` channel:
+/// the app asks for any that arrived before it was ready, then is told about
+/// new ones. Windows and Linux pass the file path as a command-line argument.
 abstract final class IncomingFileSource {
   static const channel = MethodChannel('sortle/files');
 
@@ -50,7 +50,7 @@ abstract final class IncomingFileSource {
       final file = await _readPath(path);
       if (file != null) onFile(file);
     }
-    if (!(Platform.isAndroid || Platform.isMacOS)) return;
+    if (!(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) return;
     channel.setMethodCallHandler((call) async {
       if (call.method == 'opened') {
         final file = fromMessage(call.arguments);
