@@ -11,10 +11,25 @@ typedef Migration = Map<String, Object?> Function(Map<String, Object?> json);
 /// When the format changes: bump [currentVersion], add a migration keyed by
 /// the old version to [migrations], and update docs/schema/.
 class BoardSchema {
-  static const int currentVersion = 1;
+  static const int currentVersion = 2;
 
   /// `migrations[n]` turns a version `n` file into version `n + 1`.
-  static final Map<int, Migration> migrations = {};
+  static final Map<int, Migration> migrations = {1: _addPositions};
+
+  /// Format 2 lets nodes sit anywhere on the canvas. Older boards have no
+  /// positions, so every node starts unplaced and is arranged automatically.
+  static Map<String, Object?> _addPositions(Map<String, Object?> json) {
+    Object? walk(Object? node) {
+      if (node is! Map) return node;
+      final map = Map<String, Object?>.of(node.cast<String, Object?>());
+      map['position'] = null;
+      final kids = map['children'];
+      if (kids is List) map['children'] = [for (final k in kids) walk(k)];
+      return map;
+    }
+
+    return {...json, 'root': walk(json['root'])};
+  }
 
   /// Parses board JSON text of any supported version, migrating it forward.
   static Board decode(String text, {Map<int, Migration>? migrations}) {

@@ -25,7 +25,7 @@ sortle/
 
 ## board.json
 
-The full schema is in [schema/board.v1.schema.json](schema/board.v1.schema.json).
+The full schema is in [schema/board.v2.schema.json](schema/board.v2.schema.json).
 In short:
 
 - A board has `schemaVersion`, `id`, `title`, `createdAt`, `updatedAt` and one
@@ -33,6 +33,9 @@ In short:
 - Every node has a `title`, a `type` (`task` or `decision`), a `status`
   (`pending`, `done`, `notYet`, `eliminated`), notes, optional date, time and
   reminder, voice notes, colour, tags and its ordered `children`.
+- `position` is where the node sits on the canvas (`{"x": 120, "y": 40}`,
+  in logical pixels), or `null` if it has not been placed yet, in which case
+  the app arranges it next to its parent.
 - On a decision node, `chosenChildIds` lists the children that were picked.
   One, several or none can be picked. Children that were not picked get the
   `eliminated` status. They are kept, never deleted.
@@ -45,6 +48,9 @@ In short:
 runs each migration in `lib/model/schema.dart` in turn until the file is at the
 current version. A file from a newer app is refused with a message asking to
 update.
+
+- Format 2 added `position` to every node. Format 1 boards open with every
+  node unplaced and get arranged automatically.
 
 ## Export files
 

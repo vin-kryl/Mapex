@@ -52,6 +52,16 @@ void main() {
     expect((await store.load()).historyCap, 200);
   });
 
+  test('wallpaper colours are off unless turned on', () {
+    expect(AppSettings.defaults.wallpaperColors, isFalse);
+    expect(
+      AppSettings.fromJson({'wallpaperColors': 'yes'}).wallpaperColors,
+      isFalse,
+    );
+    final on = AppSettings.defaults.copyWith(wallpaperColors: true);
+    expect(AppSettings.fromJson(on.toJson()).wallpaperColors, isTrue);
+  });
+
   test('look: colours are checked, radius clamped', () {
     final s = AppSettings.fromJson({
       'accentColor': '#2563eb',
@@ -70,5 +80,35 @@ void main() {
     final back = AppSettings.fromJson(s.toJson());
     expect(back.nodeColors, s.nodeColors);
     expect(s.copyWith(accentColor: () => null).accentColor, isNull);
+  });
+
+  test('colours left at an old default move to the new look', () {
+    final s = AppSettings.fromJson({
+      'nodeColors': [
+        '#C9B8FF',
+        '#B5EBD3',
+        '#FFD2B8',
+        '#B8DBFF',
+        '#FFEDA8',
+        '#FFC2D4',
+      ],
+      'decisionColor': '#9B84F0',
+      'takenColor': '#7DD3AE',
+      'doneColor': '#2F9E6E',
+      'notYetColor': '#C77D1E',
+      'cornerRadius': 16,
+    });
+    expect(s.toJson(), AppSettings.defaults.toJson());
+  });
+
+  test('colours the user picked are kept', () {
+    final s = AppSettings.fromJson({
+      'takenColor': '#123456',
+      'doneColor': '#ABCDEF',
+      'cornerRadius': 4,
+    });
+    expect(s.takenColor, '#123456');
+    expect(s.doneColor, '#ABCDEF');
+    expect(s.cornerRadius, 4);
   });
 }

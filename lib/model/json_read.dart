@@ -38,6 +38,13 @@ int readInt(Map<String, Object?> map, String key, String path) {
   throw SchemaException('$path.$key must be a whole number');
 }
 
+/// A number, whole or not.
+double readDouble(Map<String, Object?> map, String key, String path) {
+  final value = map[key];
+  if (value is num) return value.toDouble();
+  throw SchemaException('$path.$key must be a number');
+}
+
 int? readOptionalInt(Map<String, Object?> map, String key, String path) {
   final value = map[key];
   if (value == null || value is int) return value as int?;

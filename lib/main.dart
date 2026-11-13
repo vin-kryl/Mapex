@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:macos_window_utils/macos_window_utils.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
@@ -12,9 +13,11 @@ import 'reminders/alert_platform.dart';
 import 'reminders/plan.dart';
 import 'settings/settings_store.dart';
 import 'state/providers.dart';
+import 'ui/theme.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isMacOS) await _frostMacWindow();
   // App-private folder: the app's files dir on Android, the sandboxed
   // Application Support folder on macOS, %APPDATA% on Windows and
   // ~/.local/share on Linux.
@@ -76,4 +79,23 @@ Future<void> main(List<String> args) async {
   // Top up repeating reminders and drop any for boards that are gone.
   final boards = await container.read(boardRepositoryProvider).loadAllBoards();
   await container.read(reminderSchedulerProvider).syncAll(boards);
+}
+
+/// A Mac window with a frosted sidebar running up under a see-through
+/// title bar, like Finder or Notes.
+Future<void> _frostMacWindow() async {
+  try {
+    await WindowManipulator.initialize();
+    await WindowManipulator.setMaterial(NSVisualEffectViewMaterial.sidebar);
+    await WindowManipulator.enableFullSizeContentView();
+    await WindowManipulator.makeTitlebarTransparent();
+    await WindowManipulator.hideTitle();
+    await WindowManipulator.addToolbar();
+    await WindowManipulator.setToolbarStyle(
+      toolbarStyle: NSWindowToolbarStyle.unified,
+    );
+    isMacFrosted = true;
+  } on Object catch (e) {
+    debugPrint('Plain window: $e');
+  }
 }

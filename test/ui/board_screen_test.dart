@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -158,6 +159,62 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Charger'), findsNothing);
     expect(TreeOps.find(root(c), root(c).id)!.collapsed, isTrue);
+    await flush(tester, c);
+  });
+
+  testWidgets('dragging a node moves only that node', (tester) async {
+    final c = await open(tester);
+    final editor = c.read(boardEditorProvider(boardId).notifier);
+    final a = editor.addChild(root(c).id, 'Pack');
+    final b = editor.addChild(root(c).id, 'Book');
+    await tester.pumpAndSettle();
+    final bookBefore = tester.getTopLeft(find.widgetWithText(NodeCard, 'Book'));
+
+    final drag = await tester.startGesture(
+      tester.getCenter(find.widgetWithText(NodeCard, 'Pack')),
+      kind: PointerDeviceKind.mouse,
+    );
+    for (var i = 0; i < 10; i++) {
+      await drag.moveBy(const Offset(0, 25));
+      await tester.pump();
+    }
+    await drag.up();
+    await tester.pumpAndSettle();
+
+    final r = root(c);
+    expect(TreeOps.find(r, a)!.position, isNotNull);
+    expect(TreeOps.parentOf(r, a)!.id, r.id);
+    expect(
+      tester.getTopLeft(find.widgetWithText(NodeCard, 'Book')),
+      bookBefore,
+    );
+    expect(TreeOps.find(r, b)!.position, isNotNull, reason: 'pinned in place');
+
+    await tester.tap(find.byTooltip('Tidy up'));
+    await tester.pumpAndSettle();
+    expect(TreeOps.find(root(c), a)!.position, isNull);
+    await flush(tester, c);
+  });
+
+  testWidgets('dropping a node on another attaches it there', (tester) async {
+    final c = await open(tester);
+    final editor = c.read(boardEditorProvider(boardId).notifier);
+    final a = editor.addChild(root(c).id, 'Pack');
+    final b = editor.addChild(root(c).id, 'Book');
+    await tester.pumpAndSettle();
+
+    final from = tester.getCenter(find.widgetWithText(NodeCard, 'Book'));
+    final to = tester.getCenter(find.widgetWithText(NodeCard, 'Pack'));
+    final drag = await tester.startGesture(from, kind: PointerDeviceKind.mouse);
+    for (var i = 1; i <= 10; i++) {
+      await drag.moveTo(Offset.lerp(from, to, i / 10)!);
+      await tester.pump();
+    }
+    await drag.up();
+    await tester.pumpAndSettle();
+
+    expect(TreeOps.parentOf(root(c), b)!.id, a);
+    expect(find.byTooltip('Undo Move'), findsOneWidget);
     await flush(tester, c);
   });
 }

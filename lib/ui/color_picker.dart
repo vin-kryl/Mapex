@@ -154,8 +154,12 @@ class ColorDot extends StatelessWidget {
               shape: BoxShape.circle,
               color: color,
               gradient: color == null
-                  ? const LinearGradient(
-                      colors: [Palette.ink, Palette.ink, Palette.paper],
+                  ? LinearGradient(
+                      colors: [
+                        Tones.light.text,
+                        Tones.light.text,
+                        Tones.light.window,
+                      ],
                       stops: [0, 0.5, 0.5],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,

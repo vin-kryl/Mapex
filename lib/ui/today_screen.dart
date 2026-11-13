@@ -5,64 +5,79 @@ import '../model/node.dart';
 import '../reminders/timing.dart';
 import '../reminders/today.dart';
 import '../state/providers.dart';
-import 'board/node_style.dart';
+import 'board/node_card.dart';
 import 'prompt_sheet.dart';
+import 'shell/shell_scope.dart';
 import 'theme.dart';
+import 'widgets.dart';
 
-/// The start screen: what needs attention today, across every board.
+/// What needs attention today, across every board.
 class TodayScreen extends ConsumerWidget {
-  const TodayScreen({super.key});
+  const TodayScreen({super.key, this.embedded = false});
+
+  /// Shown in the desktop window's main pane.
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final boards = ref.watch(allBoardsProvider);
     final settings = ref.watch(settingsProvider);
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Scaffold(
-      appBar: AppBar(title: const Text('Today')),
+      appBar: embedded
+          ? AppBar(
+              toolbarHeight: 52,
+              titleSpacing: 20,
+              automaticallyImplyLeading: false,
+              title: const Text('Today'),
+            )
+          : null,
       body: boards.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Could not read boards.\n$e')),
+        error: (e, _) => QuietMessage(text: 'Could not read boards.\n$e'),
         data: (boards) {
           final items = TodayList.build(boards, settings, DateTime.now());
-          if (items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(Metrics.gutter * 2),
-                child: Text(
-                  'Nothing due today.\nAdd a date to any node to see it here.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: muted),
-                ),
-              ),
-            );
-          }
-          final children = <Widget>[];
-          TodayGroup? group;
+          final groups = <TodayGroup, List<TodayItem>>{};
           for (final item in items) {
-            if (item.group != group) {
-              group = item.group;
-              children.add(_Header(group: group));
-            }
-            children.add(_ItemTile(item: item));
+            groups.putIfAbsent(item.group, () => []).add(item);
           }
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(allBoardsProvider),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: Metrics.maxContentWidth,
-                ),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                    Metrics.gutter,
-                    0,
-                    Metrics.gutter,
-                    Metrics.gutter * 2,
-                  ),
-                  children: children,
-                ),
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                embedded ? 36 : 20,
+                embedded ? 20 : MediaQuery.paddingOf(context).top + 24,
+                embedded ? 36 : 20,
+                Metrics.gutter * 2,
               ),
+              children: [
+                if (!embedded) ...[
+                  Text('Today', style: largeTitle(context)),
+                  const SizedBox(height: 20),
+                ],
+                if (items.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 80),
+                    child: QuietMessage(
+                      icon: Icons.wb_sunny_outlined,
+                      text:
+                          'Nothing due today.\n'
+                          'Give any step a date to see it here.',
+                    ),
+                  ),
+                for (final e in groups.entries) ...[
+                  Section(
+                    title: switch (e.key) {
+                      TodayGroup.awaiting => 'Waiting for your answer',
+                      TodayGroup.overdue => 'Overdue',
+                      TodayGroup.today => 'Later today',
+                    },
+                    child: GroupedBox(
+                      children: [for (final i in e.value) TodayRow(item: i)],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ],
             ),
           );
         },
@@ -71,85 +86,91 @@ class TodayScreen extends ConsumerWidget {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.group});
-
-  final TodayGroup group;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = switch (group) {
-      TodayGroup.awaiting => 'Waiting for your answer',
-      TodayGroup.overdue => 'Overdue',
-      TodayGroup.today => 'Later today',
-    };
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, Metrics.gutter, 4, Metrics.gap / 2),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
-}
-
-class _ItemTile extends ConsumerWidget {
-  const _ItemTile({required this.item});
+/// One thing due: its status mark, title, board and time. Tapping answers
+/// it if it is waiting, else opens it on its board.
+class TodayRow extends ConsumerWidget {
+  const TodayRow({super.key, required this.item});
 
   final TodayItem item;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final n = item.node;
-    final scheme = Theme.of(context).colorScheme;
+    final t = Tones.of(context);
     final loc = MaterialLocalizations.of(context);
     final due = Timing.dueAt(n);
     final day = Timing.day(n)!;
     final when = [
-      if (item.group == TodayGroup.overdue ||
-          (item.group == TodayGroup.awaiting &&
-              !DateUtils.isSameDay(day, DateTime.now())))
+      if (!DateUtils.isSameDay(day, DateTime.now()))
         loc.formatShortMonthDay(day),
       if (due != null) loc.formatTimeOfDay(TimeOfDay.fromDateTime(due)),
     ].join(', ');
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Metrics.gap / 2),
-      child: Card(
-        child: ListTile(
-          leading: Icon(
-            NodeStyle.statusIcon(n),
-            color: NodeStyle.statusColor(n, context),
-          ),
-          title: Text(n.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: Text(
-            [item.boardTitle, if (when.isNotEmpty) when].join(' · '),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: item.group == TodayGroup.awaiting
-              ? Text(
-                  n.type == NodeType.decision ? 'Decide' : 'Answer',
-                  style: TextStyle(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w600,
+    final awaiting = item.group == TodayGroup.awaiting;
+    return InkWell(
+      onTap: () async {
+        if (awaiting) {
+          await showPromptSheet(
+            context,
+            ref,
+            boardId: item.boardId,
+            nodeId: n.id,
+          );
+          ref.invalidate(allBoardsProvider);
+        } else {
+          openBoardAt(context, boardId: item.boardId, nodeId: n.id);
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(
+          children: [
+            SizedBox(width: 20, child: StatusMark(node: n)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    n.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: isApple ? 13.5 : 15,
+                      fontWeight: FontWeight.w500,
+                      color: t.text,
+                    ),
                   ),
-                )
-              : const Icon(Icons.chevron_right),
-          onTap: () async {
-            if (item.group == TodayGroup.awaiting) {
-              await showPromptSheet(
-                context,
-                ref,
-                boardId: item.boardId,
-                nodeId: n.id,
-              );
-            } else {
-              openBoardAt(context, boardId: item.boardId, nodeId: n.id);
-            }
-          },
+                  Text(
+                    item.boardTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: t.secondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (awaiting)
+              Text(
+                n.type == NodeType.decision ? 'Decide' : 'Answer',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              )
+            else if (when.isNotEmpty)
+              Text(
+                when,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: item.group == TodayGroup.overdue
+                      ? Palette.danger
+                      : t.secondary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+          ],
         ),
       ),
     );

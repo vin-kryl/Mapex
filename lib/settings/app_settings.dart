@@ -43,6 +43,7 @@ class AppSettings {
     required this.doneColor,
     required this.notYetColor,
     required this.cornerRadius,
+    required this.wallpaperColors,
   });
 
   static const defaults = AppSettings(
@@ -60,6 +61,25 @@ class AppSettings {
     repeatsScheduledAhead: 5,
     accentColor: null,
     nodeColors: [
+      '#8E7CF0',
+      '#5FBF95',
+      '#E8A07A',
+      '#7AA8E8',
+      '#E8C95F',
+      '#E87A9A',
+    ],
+    decisionColor: '#8E8E93',
+    takenColor: null,
+    doneColor: '#34C759',
+    notYetColor: '#FF9F0A',
+    cornerRadius: 10,
+    wallpaperColors: false,
+  );
+
+  /// Defaults from earlier versions. A settings file still holding one of
+  /// these was never changed by the user, so it gets today's default.
+  static const _retired = {
+    'nodeColors': [
       '#C9B8FF',
       '#B5EBD3',
       '#FFD2B8',
@@ -67,12 +87,12 @@ class AppSettings {
       '#FFEDA8',
       '#FFC2D4',
     ],
-    decisionColor: '#9B84F0',
-    takenColor: '#7DD3AE',
-    doneColor: '#2F9E6E',
-    notYetColor: '#C77D1E',
-    cornerRadius: 16,
-  );
+    'decisionColor': '#9B84F0',
+    'takenColor': '#7DD3AE',
+    'doneColor': '#2F9E6E',
+    'notYetColor': '#C77D1E',
+    'cornerRadius': 16,
+  };
 
   /// Bounds used by the settings screen and when reading the file.
   static const historyCapRange = (min: 1, max: 5000);
@@ -106,7 +126,8 @@ class AppSettings {
   /// with the system at a time. Topped up whenever the app opens.
   final int repeatsScheduledAhead;
 
-  /// The app's main colour as `#RRGGBB`, or null for plain black and white.
+  /// The app's main colour as `#RRGGBB`, or null for the platform's own
+  /// (system blue on Apple devices, Sortle indigo elsewhere).
   final String? accentColor;
 
   /// The colours offered for colour-coding nodes.
@@ -115,13 +136,17 @@ class AppSettings {
   /// Marks decision nodes.
   final String decisionColor;
 
-  /// Outlines the path picked in a decision.
-  final String takenColor;
+  /// Outlines the path picked in a decision, or null to use the main colour.
+  final String? takenColor;
   final String doneColor;
   final String notYetColor;
 
   /// How rounded cards, nodes and buttons are.
   final double cornerRadius;
+
+  /// Android 12 and later: take the main colour from the wallpaper, unless
+  /// a main colour is picked.
+  final bool wallpaperColors;
 
   AppSettings copyWith({
     LayoutDirection? layoutDirection,
@@ -139,10 +164,11 @@ class AppSettings {
     String? Function()? accentColor,
     List<String>? nodeColors,
     String? decisionColor,
-    String? takenColor,
+    String? Function()? takenColor,
     String? doneColor,
     String? notYetColor,
     double? cornerRadius,
+    bool? wallpaperColors,
   }) {
     return AppSettings(
       layoutDirection: layoutDirection ?? this.layoutDirection,
@@ -163,10 +189,11 @@ class AppSettings {
       accentColor: accentColor == null ? this.accentColor : accentColor(),
       nodeColors: nodeColors ?? this.nodeColors,
       decisionColor: decisionColor ?? this.decisionColor,
-      takenColor: takenColor ?? this.takenColor,
+      takenColor: takenColor == null ? this.takenColor : takenColor(),
       doneColor: doneColor ?? this.doneColor,
       notYetColor: notYetColor ?? this.notYetColor,
       cornerRadius: cornerRadius ?? this.cornerRadius,
+      wallpaperColors: wallpaperColors ?? this.wallpaperColors,
     );
   }
 
@@ -190,6 +217,7 @@ class AppSettings {
     'doneColor': doneColor,
     'notYetColor': notYetColor,
     'cornerRadius': cornerRadius,
+    'wallpaperColors': wallpaperColors,
   };
 
   /// Lenient: a bad or missing value is replaced by its default.
@@ -221,8 +249,14 @@ class AppSettings {
 
     String color(String key, String fallback) {
       final v = map[key];
+      if (v is String && v.toUpperCase() == _retired[key]) return fallback;
       return v is String && hexColor.hasMatch(v) ? v.toUpperCase() : fallback;
     }
+
+    bool sameList(List<String> a, Object? b) =>
+        b is List &&
+        a.length == b.length &&
+        a.indexed.every((e) => b[e.$1] == e.$2);
 
     final rawNodeColors = map['nodeColors'];
     final nodeColors = rawNodeColors is List
@@ -231,8 +265,12 @@ class AppSettings {
               if (c is String && hexColor.hasMatch(c)) c.toUpperCase(),
           ].take(nodeColorsRange.max).toList()
         : d.nodeColors;
+    final retiredColors = sameList(nodeColors, _retired['nodeColors']);
+    final rawTaken = map['takenColor'];
     final rawAccent = map['accentColor'];
-    final rawRadius = map['cornerRadius'];
+    final rawRadius = map['cornerRadius'] == _retired['cornerRadius']
+        ? null
+        : map['cornerRadius'];
 
     final rawScale = map['fontScale'];
     final scale = rawScale is num
@@ -281,9 +319,16 @@ class AppSettings {
       accentColor: rawAccent is String && hexColor.hasMatch(rawAccent)
           ? rawAccent.toUpperCase()
           : null,
-      nodeColors: nodeColors.isEmpty ? d.nodeColors : nodeColors,
+      nodeColors: nodeColors.isEmpty || retiredColors
+          ? d.nodeColors
+          : nodeColors,
       decisionColor: color('decisionColor', d.decisionColor),
-      takenColor: color('takenColor', d.takenColor),
+      takenColor:
+          rawTaken is String &&
+              hexColor.hasMatch(rawTaken) &&
+              rawTaken.toUpperCase() != _retired['takenColor']
+          ? rawTaken.toUpperCase()
+          : null,
       doneColor: color('doneColor', d.doneColor),
       notYetColor: color('notYetColor', d.notYetColor),
       cornerRadius: rawRadius is num
@@ -292,6 +337,10 @@ class AppSettings {
               cornerRadiusRange.max,
             )
           : d.cornerRadius,
+      wallpaperColors: pick(
+        () => readBool(map, 'wallpaperColors', 's'),
+        d.wallpaperColors,
+      ),
     );
   }
 }

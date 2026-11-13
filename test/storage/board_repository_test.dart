@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sortle/model/node.dart';
+import 'package:sortle/model/templates.dart';
+import 'package:sortle/model/tree_ops.dart';
 import 'package:sortle/storage/board_repository.dart';
 
 void main() {
@@ -149,5 +151,21 @@ void main() {
       File('${boardDir(a.id).path}/board.json').readAsStringSync(),
     );
     expect((json as Map)['title'], 'B');
+  });
+
+  test('a template board starts with its steps', () async {
+    final b = await repo.createFromTemplate('Lisbon', BoardTemplate.trip);
+    final again = await repo.loadBoard(b.id);
+    expect(again.title, 'Lisbon');
+    expect(again.root.title, 'Lisbon');
+    expect(again.root.children.map((n) => n.title), [
+      'Getting there',
+      'Where to stay',
+      'Things to do',
+      'Pack',
+    ]);
+    expect(again.root.children[1].type, NodeType.decision);
+    final ids = {for (final e in TreeOps.walk(again.root)) e.node.id};
+    expect(ids, hasLength(again.nodeCount));
   });
 }
